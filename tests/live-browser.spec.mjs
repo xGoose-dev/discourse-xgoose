@@ -75,6 +75,7 @@ test("Luna: image understanding, forum research, automatic compaction, dollars, 
   const answer = page.locator(".xgoose-message[data-role=assistant]").last();
   await expect(answer).toContainText("GOOSE-714");
   await expect(answer).toContainText("PROJECT-MAPLE-927");
+  await page.locator(".xgoose-info > summary").click();
   await expect(page.locator(".xgoose-summary")).toBeVisible();
   await expect(page.locator(".xgoose-message-images img")).toHaveCount(1);
   const transcript = await (
@@ -91,11 +92,12 @@ test("Luna: image understanding, forum research, automatic compaction, dollars, 
   ).toBe(true);
   expect(JSON.stringify(transcript)).toContain("sha256=");
   expect(JSON.stringify(transcript)).not.toContain("data:image/");
+  const cost = await page.locator(".xgoose-context").innerText();
+  await page.locator(".xgoose-info > summary").click();
   await page.screenshot({
     path: "test-results/live-desktop.png",
     fullPage: true,
   });
-  const cost = await page.locator(".xgoose-context").innerText();
   await page.getByRole("button", { name: "Close panel", exact: true }).click();
   await page.locator(".xgoose-launcher").click();
   await expect(page.locator(".xgoose-message")).toHaveCount(0);
@@ -106,7 +108,9 @@ test("Luna: image understanding, forum research, automatic compaction, dollars, 
     .click();
   await expect(page.locator(".xgoose-message-images img")).toHaveCount(1);
   await expect(page.locator(".xgoose-thread")).toContainText("GOOSE-714");
+  await page.locator(".xgoose-info > summary").click();
   expect(await page.locator(".xgoose-context").innerText()).toBe(cost);
+  await page.locator(".xgoose-info > summary").click();
   await page.reload();
   await page.locator(".xgoose-launcher").click();
   await expect(page.locator(".xgoose-message")).toHaveCount(0);

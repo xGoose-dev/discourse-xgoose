@@ -10,11 +10,11 @@ zh_CN:
       remaining: 剩余 %{count}
       resets: 重置时间：%{time}
       conversation: 对话
-      welcome: 从社区讨论中找到答案
-      welcome_hint: 提出问题，xGoose 会搜索、阅读相关帖子，并附上来源。
+      welcome: 想了解什么？
+      welcome_hint: 从论坛讨论中找到答案。
       summarize: 总结当前主题
-      related: 查找相关讨论
-      recent: 查看近期讨论
+      related: 相关讨论
+      recent: 近期话题
       research_steps: 检索过程
       running: 执行中
       failed: 失败
@@ -57,7 +57,7 @@ zh_CN:
         recent: 查看论坛近期讨论，阅读相关帖子后总结。
       forum: 论坛助手
       history: 聊天历史
-      history_hint: 仅保存在此设备，按账号隔离。图片随对话保存。选择历史对话即可继续。
+      history_hint: 保存在此设备，选择对话即可继续。
       history_empty: 保存的对话会显示在这里。
       history_saved: 保存在此设备 · 点击继续
       delete_chat: 删除本地对话
@@ -83,3 +83,6 @@ zh_CN:
       privacy_label: 发送至站点 AI · 管理员可查看记录
       storage_warning: 无法保存本地历史，请在关闭对话前检查浏览器存储。
       image_prompt: 理解这张图片，并搜索论坛中相关的讨论。
+      details: 详情与隐私
+      model: 模型
+      budget_remaining: 今日剩余 %{amount}

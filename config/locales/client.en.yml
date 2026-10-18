@@ -10,11 +10,11 @@ en:
       remaining: '%{count} remaining'
       resets: Resets %{time}
       conversation: Conversation
-      welcome: Find answers in your community
-      welcome_hint: Ask a question. xGoose reads the relevant posts and links to its sources.
+      welcome: Ask your community
+      welcome_hint: Answers from the discussions here.
       summarize: Summarize this topic
-      related: Find related discussions
-      recent: Explore recent discussions
+      related: Related discussions
+      recent: Recent topics
       research_steps: Research steps
       running: Running
       failed: Failed
@@ -62,8 +62,7 @@ en:
         recent: Show recent discussions in this forum and read the most relevant ones before summarizing.
       forum: forum
       history: Chat history
-      history_hint: Saved on this device, for your account. Images stay with the conversation. Restore
-        a chat to continue it.
+      history_hint: Saved on this device. Select a chat to continue.
       history_empty: Your saved conversations will appear here.
       history_saved: Saved on this device · click to continue
       delete_chat: Delete local chat
@@ -91,3 +90,6 @@ en:
       privacy_label: Sent to site AI · administrator logs
       storage_warning: Local history could not be saved. Check browser storage before closing this chat.
       image_prompt: Describe this image and search the forum for relevant discussions.
+      details: Details & privacy
+      model: Model
+      budget_remaining: '%{amount} left today'

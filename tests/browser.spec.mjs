@@ -114,9 +114,7 @@ test("Chinese translation, dark theme, and mobile panel", async ({ page }) => {
     await page
       .getByRole("button", { name: "打开 xGoose", exact: true })
       .click();
-    await expect(page.locator("#xgoose-panel")).toContainText(
-      "从社区讨论中找到答案",
-    );
+    await expect(page.locator("#xgoose-panel")).toContainText("想了解什么？");
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(390);
@@ -153,4 +151,54 @@ test("slow first token survives the ordinary web-worker timeout", async ({
   );
   await expect(page.locator(".xgoose-error")).toHaveCount(0);
   expect(Date.now() - started).toBeGreaterThanOrEqual(64000);
+});
+
+test("minimal panel keeps secondary settings in details and preserves the main actions", async ({
+  page,
+}) => {
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await page.locator(".xgoose-launcher").click();
+  await expect(page.locator(".xgoose-welcome h2")).toHaveText(
+    "Ask your community",
+  );
+  await expect(
+    page.locator(".xgoose-quota,.xgoose-welcome-icon,.xgoose-eyebrow"),
+  ).toHaveCount(0);
+  await expect(page.locator(".xgoose-footer")).toContainText("left today");
+  await expect(
+    page.getByRole("button", { name: "Attach images", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Send", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Include my private messages", { exact: true }),
+  ).toBeHidden();
+  await page.locator(".xgoose-info > summary").click();
+  await expect(
+    page.getByLabel("Include my private messages", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".xgoose-info-body")).toContainText("Daily budget");
+  expect(
+    (await page.locator(".xgoose-info-body").boundingBox()).width,
+  ).toBeGreaterThan(350);
+  await expect(page.locator(".xgoose-info-body")).toContainText(
+    "Administrators can access",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".xgoose-info")).not.toHaveAttribute("open");
+  await expect(page.locator("#xgoose-panel")).toBeVisible();
+  await page.getByRole("button", { name: "Chat history", exact: true }).click();
+  await expect(page.locator(".xgoose-history h2")).toHaveText("Chat history");
+  await page.getByRole("button", { name: "New chat", exact: true }).click();
+  await expect(page.locator("#xgoose-input")).toBeVisible();
+  await page.screenshot({
+    path: "test-results/minimal-desktop.png",
+    fullPage: false,
+  });
+  expect(errors).toEqual([]);
 });

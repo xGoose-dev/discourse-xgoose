@@ -91,6 +91,12 @@ export default class XgoosePanel extends Component {
   }
   @action keydown(event) {
     if (event.key === "Escape") {
+      const details = event.currentTarget.querySelector(".xgoose-info[open]");
+      if (details) {
+        details.removeAttribute("open");
+        details.querySelector("summary").focus();
+        return;
+      }
       this.toggle();
       document.querySelector(".xgoose-launcher")?.focus();
     }
@@ -141,10 +147,9 @@ export default class XgoosePanel extends Component {
         {{didInsert this.focus}}
       >
         <header class="xgoose-header">
-          <span class="xgoose-brand-mark" aria-hidden="true">✦</span><div
+          <span class="xgoose-brand-mark" aria-hidden="true">✦</span><strong
             class="xgoose-brand"
-          ><strong>xGoose<span> / {{i18n "xgoose.forum"}}</span></strong><small
-            ><i></i>{{this.model}}</small></div>
+          >xGoose</strong>
           <div class="xgoose-header-actions">
             <button
               type="button"
@@ -175,14 +180,6 @@ export default class XgoosePanel extends Component {
           </div>
         </header>
         {{#if this.currentUser}}
-          <div class="xgoose-quota" title={{this.resetTime}}><span>{{i18n
-                "xgoose.budget"
-              }}
-              <strong>{{this.remaining}}</strong>
-              /
-              {{this.daily}}</span><span>{{i18n
-                "xgoose.daily_reset"
-              }}</span></div>
           {{#if this.xgoose.showHistory}}
             <div class="xgoose-history"><h2>{{i18n "xgoose.history"}}</h2><p
               >{{i18n "xgoose.history_hint"}}</p>
@@ -191,9 +188,8 @@ export default class XgoosePanel extends Component {
                 ><button
                     type="button"
                     {{on "click" (fn this.xgoose.restore chat.id)}}
-                  ><strong>{{chat.title}}</strong><small>{{chat.savedLabel}}
-                      ·
-                      {{chat.costLabel}}</small></button><button
+                  ><strong>{{chat.title}}</strong><small
+                    >{{chat.savedLabel}}</small></button><button
                     type="button"
                     aria-label={{i18n "xgoose.delete_chat"}}
                     title={{i18n "xgoose.delete_chat"}}
@@ -219,37 +215,29 @@ export default class XgoosePanel extends Component {
               aria-label={{i18n "xgoose.conversation"}}
               aria-live="polite"
               aria-busy={{this.xgoose.busy}}
-            ><div class="xgoose-thread-content">
+            >
+              <div class="xgoose-thread-content">
                 {{#unless this.xgoose.messages.length}}<div
                     class="xgoose-welcome"
-                  ><div class="xgoose-welcome-icon">✦</div><div
-                      class="xgoose-eyebrow"
-                    >{{i18n "xgoose.eyebrow"}}</div><h2>{{i18n
-                        "xgoose.welcome"
-                      }}</h2><p>{{i18n "xgoose.welcome_hint"}}</p><div
-                      class="xgoose-shortcuts"
-                    >
+                  ><h2>{{i18n "xgoose.welcome"}}</h2><p>{{i18n
+                        "xgoose.welcome_hint"
+                      }}</p><div class="xgoose-shortcuts">
                       <button
                         type="button"
                         data-prompt="summarize"
                         {{on "click" this.shortcut}}
-                      ><span>≋</span>{{i18n "xgoose.summarize"}}<span
-                        >↗</span></button>
+                      >{{i18n "xgoose.summarize"}}</button>
                       <button
                         type="button"
                         data-prompt="related"
                         {{on "click" this.shortcut}}
-                      ><span>⌕</span>{{i18n "xgoose.related"}}<span
-                        >↗</span></button>
+                      >{{i18n "xgoose.related"}}</button>
                       <button
                         type="button"
                         data-prompt="recent"
                         {{on "click" this.shortcut}}
-                      ><span>◷</span>{{i18n "xgoose.recent"}}<span
-                        >↗</span></button>
-                    </div><small>{{i18n
-                        "xgoose.fresh_hint"
-                      }}</small></div>{{/unless}}
+                      >{{i18n "xgoose.recent"}}</button>
+                    </div></div>{{/unless}}
                 {{#each
                   this.xgoose.messages key="id"
                   as |message|
@@ -280,16 +268,14 @@ export default class XgoosePanel extends Component {
                             )
                           }}</summary><pre
                         >{{tool.details}}</pre></details>{{/each}}</details>{{/if}}
-              </div></div>
+              </div>
+            </div>
             {{#if this.xgoose.error}}<p
                 class="xgoose-error"
                 role="alert"
               >{{this.errorText}}</p>{{/if}}
             {{#if this.xgoose.logWarning}}<p class="xgoose-error">{{i18n
                   "xgoose.log_warning"
-                }}</p>{{/if}}
-            {{#if this.xgoose.storageWarning}}<p class="xgoose-error">{{i18n
-                  "xgoose.storage_warning"
                 }}</p>{{/if}}
             <form class="xgoose-composer" {{on "submit" this.send}}>
               {{#if this.xgoose.attachments.length}}<div
@@ -310,7 +296,7 @@ export default class XgoosePanel extends Component {
                 }}</label><textarea
                 id="xgoose-input"
                 value={{this.draft}}
-                rows="3"
+                rows="2"
                 maxlength="12000"
                 placeholder={{i18n "xgoose.placeholder"}}
                 {{on "input" this.updateDraft}}
@@ -330,16 +316,9 @@ export default class XgoosePanel extends Component {
                   title={{i18n "xgoose.attach"}}
                   disabled={{this.xgoose.busy}}
                   {{on "click" this.chooseImage}}
-                >＋ <span>{{i18n "xgoose.image"}}</span></button><label
-                  class="xgoose-private"
-                ><input
-                    type="checkbox"
-                    checked={{this.xgoose.includePrivate}}
-                    disabled={{this.xgoose.busy}}
-                    {{on "change" this.xgoose.togglePrivate}}
-                  />{{i18n "xgoose.include_private"}}</label><div
-                  class="xgoose-send-spacer"
-                ></div>{{#if this.xgoose.busy}}<button
+                >＋</button><div class="xgoose-send-spacer"></div>{{#if
+                  this.xgoose.busy
+                }}<button
                     type="button"
                     class="xgoose-send"
                     {{on "click" this.xgoose.stop}}
@@ -350,25 +329,51 @@ export default class XgoosePanel extends Component {
                     aria-label={{i18n "xgoose.send"}}
                   >↑</button>{{/if}}</div>
             </form>
-            <div class="xgoose-context"><span>{{i18n
-                  "xgoose.chat_cost"
-                  cost=this.cost
-                }}</span><span title={{i18n "xgoose.auto_summary"}}>{{i18n
-                  "xgoose.context"
-                  percent=this.xgoose.contextPercent
-                }}
-                ·
-                {{i18n
-                  "xgoose.summaries"
-                  count=this.xgoose.compactions
-                }}</span></div>
-            {{#if this.xgoose.summary}}<details class="xgoose-summary"><summary
-                >{{i18n "xgoose.summary"}}</summary><p
-                >{{this.xgoose.summary}}</p></details>{{/if}}
-            <details class="xgoose-privacy"><summary>{{i18n
-                  "xgoose.privacy_label"
-                }}</summary><p>{{i18n "xgoose.privacy"}}</p></details>
           {{/if}}
+          {{#if this.xgoose.storageWarning}}<p class="xgoose-error">{{i18n
+                "xgoose.storage_warning"
+              }}</p>{{/if}}
+          <footer class="xgoose-footer">
+            <span title={{i18n "xgoose.resets" time=this.resetTime}}>{{i18n
+                "xgoose.budget_remaining"
+                amount=this.remaining
+              }}</span>
+            <details class="xgoose-info"><summary>{{i18n
+                  "xgoose.details"
+                }}</summary><div class="xgoose-info-body">
+                <div class="xgoose-info-row"><span>{{i18n
+                      "xgoose.model"
+                    }}</span><span>{{this.model}}</span></div>
+                <div class="xgoose-info-row"><span>{{i18n
+                      "xgoose.budget"
+                    }}</span><span>{{this.remaining}}
+                    /
+                    {{this.daily}}</span></div>
+                <p>{{i18n "xgoose.resets" time=this.resetTime}}</p>
+                <div class="xgoose-context"><span>{{i18n
+                      "xgoose.chat_cost"
+                      cost=this.cost
+                    }}</span><span>{{i18n
+                      "xgoose.context"
+                      percent=this.xgoose.contextPercent
+                    }}</span></div>
+                <p title={{i18n "xgoose.auto_summary"}}>{{i18n
+                    "xgoose.summaries"
+                    count=this.xgoose.compactions
+                  }}</p>
+                <label class="xgoose-private"><input
+                    type="checkbox"
+                    checked={{this.xgoose.includePrivate}}
+                    disabled={{this.xgoose.busy}}
+                    {{on "change" this.xgoose.togglePrivate}}
+                  />{{i18n "xgoose.include_private"}}</label>
+                {{#if this.xgoose.summary}}<details
+                    class="xgoose-summary"
+                  ><summary>{{i18n "xgoose.summary"}}</summary><p
+                    >{{this.xgoose.summary}}</p></details>{{/if}}
+                <p class="xgoose-privacy">{{i18n "xgoose.privacy"}}</p>
+              </div></details>
+          </footer>
         {{else}}<p class="xgoose-welcome">{{i18n
               "xgoose.login_required"
             }}</p>{{/if}}
