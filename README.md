@@ -4,7 +4,7 @@
 
 [简体中文](README.zh-CN.md) · [Installation](#installation) · [Configuration](#configuration) · [Architecture](#architecture) · [Development](docs/development.md)
 
-> Initial release candidate. See [verification](docs/verification.md) for the exact Discourse versions and checks completed. No production forum is deployed by this repository.
+> v0.1.0. See [verification](docs/verification.md) for the exact Discourse versions and checks completed, including a live Luna image-and-research workflow. No production forum is deployed by this repository.
 
 ## What it does
 
@@ -21,7 +21,9 @@
 
 The first version focuses on reading. It does not post replies, execute arbitrary JavaScript, browse other sites, install skills, or automate navigation. Chat stays open while navigating the forum. Closing and reopening the panel or refreshing starts a new chat. Earlier chats, images, and model context can be restored from local history on that browser. History is isolated by forum origin, base path, and signed-in account; it does not sync across devices. Audit logs remain a separate administrator troubleshooting service.
 
-![xGoose answering a question in a synthetic development forum](docs/screenshots/desktop.png)
+![Luna understands an attached image, researches the forum, and cites the original post](docs/screenshots/live-image-demo.jpg)
+
+[Local history](docs/screenshots/history-live.jpg) · [Administrator audit view](docs/screenshots/admin-live.jpg)
 
 ## Installation
 

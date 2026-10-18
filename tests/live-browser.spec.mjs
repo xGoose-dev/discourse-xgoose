@@ -92,7 +92,7 @@ test("Luna: image understanding, forum research, automatic compaction, dollars, 
   expect(JSON.stringify(transcript)).toContain("sha256=");
   expect(JSON.stringify(transcript)).not.toContain("data:image/");
   await page.screenshot({
-    path: "docs/screenshots/desktop.png",
+    path: "test-results/live-desktop.png",
     fullPage: true,
   });
   const cost = await page.locator(".xgoose-context").innerText();
@@ -113,7 +113,7 @@ test("Luna: image understanding, forum research, automatic compaction, dollars, 
   await page.getByRole("button", { name: "Chat history", exact: true }).click();
   await expect(page.locator(".xgoose-history-row")).toHaveCount(1);
   await page.screenshot({
-    path: "docs/screenshots/history.png",
+    path: "test-results/live-history.png",
     fullPage: true,
   });
   // Account keys are used for both metadata and full image-bearing transcripts.
@@ -141,7 +141,7 @@ test("Luna: image understanding, forum research, automatic compaction, dollars, 
   await expect(admin.locator("body")).toContainText("Transcript complete");
   await expect(admin.locator("body")).toContainText("$");
   await admin.screenshot({
-    path: "docs/screenshots/admin-transcript.png",
+    path: "test-results/live-admin-transcript.png",
     fullPage: true,
   });
   if (process.env.XGOOSE_TEST_MEMBER_PASSWORD) {
