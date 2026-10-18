@@ -1,8 +1,21 @@
 # frozen_string_literal: true
 require "rails_helper"
 RSpec.describe DiscourseXgoose::Transcript do
-  let(:call) { Struct.new(:turn_id, :status, :response_message).new("turn", "completed", { "finish_reason" => "stop", "tool_calls" => [] }) }
-  let(:event) { Struct.new(:turn_id, :sequence, :kind, :payload).new("turn", 0, "turn_end", { "client_logs_complete" => true }) }
+  let(:call) do
+    Struct.new(:turn_id, :status, :response_message).new(
+      "turn",
+      "completed",
+      { "finish_reason" => "stop", "tool_calls" => [] },
+    )
+  end
+  let(:event) do
+    Struct.new(:turn_id, :sequence, :kind, :payload).new(
+      "turn",
+      0,
+      "turn_end",
+      { "client_logs_complete" => true },
+    )
+  end
   it "requires a terminal event for every turn, not just a previous one" do
     expect(described_class.complete?([call], [event])).to eq(true)
     second = call.dup

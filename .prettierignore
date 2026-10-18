@@ -1,0 +1,4 @@
+node_modules/
+assets/javascripts/discourse/lib/
+test-results/
+playwright-report/

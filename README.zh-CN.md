@@ -37,6 +37,8 @@ hooks:
 
 在管理员设置中搜索 `xgoose`，设置 HTTPS 上游基础地址（例如 `https://your-provider.example/v1`）、密钥和模型 ID，最后开启 `xgoose_enabled`。模型必须支持流式 OpenAI Chat Completions 和工具调用。暂不支持 Responses API、图片输入或用户自带 API。
 
+使用 **GPT-6 Luna** 时，模型设为 `gpt-6-luna`，同时开启 `xgoose_use_max_completion_tokens` 和 `xgoose_disable_reasoning`。Luna 通过 Chat Completions 调用工具时需要 `reasoning_effort: none`。
+
 默认限制：每人每日输入与输出合计 100,000 token（UTC 零点重置），每次输出最多 2,048 token，每人每分钟 20 次调用，每人同时 1 次、全站同时 8 次调用，每个问题最多 8 次模型调用，120 秒超时，日志保留 30 天。除每人同时 1 次的限制外，均可通过站点设置调整。
 
 额度在请求前原子预留，完成后按上游 usage 结算。上游缺少 usage、请求中断或进程退出时保守计费，避免免费重试。上下文上限按 UTF-8 字节及消息开销保守估计，可能提前于模型实际 tokenizer 上限；会话过长时开启新会话即可。

@@ -18,6 +18,10 @@ en:
     xgoose_timeout_seconds: Total timeout for an upstream model call, in seconds.
     xgoose_log_retention_days: Days to retain private administrator audit logs. May
       include private messages and restricted posts.
+    xgoose_use_max_completion_tokens: Use max_completion_tokens instead of max_tokens
+      (required by newer OpenAI models).
+    xgoose_disable_reasoning: Send reasoning_effort=none (required for Luna tool calls
+      over Chat Completions).
   xgoose:
     errors:
       generic: The request failed. Try a new chat or contact a site administrator.

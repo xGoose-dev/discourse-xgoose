@@ -9,6 +9,10 @@ plugins:
     secret: true
   xgoose_model:
     default: ""
+  xgoose_use_max_completion_tokens:
+    default: false
+  xgoose_disable_reasoning:
+    default: false
   xgoose_context_tokens:
     default: 32768
     min: 4096

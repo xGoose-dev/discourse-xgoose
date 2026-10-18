@@ -5,7 +5,7 @@ class CreateXgooseTables < ActiveRecord::Migration[7.2]
       t.integer :user_id, null: false
       t.timestamps
     end
-    add_index :xgoose_sessions, [:user_id, :created_at]
+    add_index :xgoose_sessions, %i[user_id created_at]
     create_table :xgoose_requests do |t|
       t.bigint :session_id, null: false
       t.integer :user_id, null: false
@@ -25,15 +25,15 @@ class CreateXgooseTables < ActiveRecord::Migration[7.2]
       t.timestamps
     end
     add_index :xgoose_requests, :request_id, unique: true
-    add_index :xgoose_requests, [:session_id, :turn_id]
-    add_index :xgoose_requests, [:status, :expires_at]
+    add_index :xgoose_requests, %i[session_id turn_id]
+    add_index :xgoose_requests, %i[status expires_at]
     create_table :xgoose_usage do |t|
       t.integer :user_id, null: false
       t.date :day, null: false
       t.bigint :used, null: false, default: 0
       t.bigint :reserved, null: false, default: 0
     end
-    add_index :xgoose_usage, [:user_id, :day], unique: true
+    add_index :xgoose_usage, %i[user_id day], unique: true
     create_table :xgoose_events do |t|
       t.bigint :session_id, null: false
       t.string :event_id, null: false
@@ -43,7 +43,7 @@ class CreateXgooseTables < ActiveRecord::Migration[7.2]
       t.jsonb :payload, null: false, default: {}
       t.datetime :created_at, null: false
     end
-    add_index :xgoose_events, [:session_id, :event_id], unique: true
-    add_index :xgoose_events, [:session_id, :sequence]
+    add_index :xgoose_events, %i[session_id event_id], unique: true
+    add_index :xgoose_events, %i[session_id sequence]
   end
 end

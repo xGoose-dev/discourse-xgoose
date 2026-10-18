@@ -16,5 +16,6 @@ require_relative "lib/discourse_xgoose/engine"
 
 after_initialize do
   # Chat content belongs in the private audit tables, never in Rails request logs.
-  Rails.application.config.filter_parameters += [:messages, :tools, :events, :content, :arguments]
+  ActiveRecord::Base.filter_attributes += %i[messages response_message payload]
+  Rails.application.config.filter_parameters += %i[messages tools events content arguments]
 end

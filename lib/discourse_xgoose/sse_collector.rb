@@ -27,9 +27,7 @@ module DiscourseXgoose
       end
     end
     def finish
-      if @buffer.start_with?("data:")
-        @event << @buffer.delete_prefix("data:").strip
-      end
+      @event << @buffer.delete_prefix("data:").strip if @buffer.start_with?("data:")
       consume(@event.join("\n")) if @event.any?
       @buffer.clear
       @event = []
@@ -42,7 +40,9 @@ module DiscourseXgoose
       event = JSON.parse(data)
       raise Error.new("upstream_error", 502) if event["error"]
       usage = event["usage"]
-      if usage.is_a?(Hash) && usage["prompt_tokens"].is_a?(Integer) && usage["completion_tokens"].is_a?(Integer) && usage["prompt_tokens"] >= 0 && usage["completion_tokens"] >= 0
+      if usage.is_a?(Hash) && usage["prompt_tokens"].is_a?(Integer) &&
+           usage["completion_tokens"].is_a?(Integer) && usage["prompt_tokens"] >= 0 &&
+           usage["completion_tokens"] >= 0
         @tokens = usage["prompt_tokens"] + usage["completion_tokens"]
       end
       choice = event.fetch("choices", [])[0]
@@ -53,9 +53,19 @@ module DiscourseXgoose
       Array(delta["tool_calls"]).each do |call|
         index = call["index"]
         raise Error.new("invalid_upstream", 502) unless index.is_a?(Integer) && index.between?(0, 7)
-        item = @message["tool_calls"][index] ||= { "id" => +"", "type" => "function", "function" => { "name" => +"", "arguments" => +"" } }
+        item =
+          @message["tool_calls"][index] ||= {
+            "id" => +"",
+            "type" => "function",
+            "function" => {
+              "name" => +"",
+              "arguments" => +"",
+            },
+          }
         item["id"] << call["id"] if call["id"]
-        %w[name arguments].each { |key| item["function"][key] << call.dig("function", key) if call.dig("function", key) }
+        %w[name arguments].each do |key|
+          item["function"][key] << call.dig("function", key) if call.dig("function", key)
+        end
       end
     rescue JSON::ParserError
       raise Error.new("invalid_upstream", 502)

@@ -5,11 +5,15 @@ require "timeout"
 module DiscourseXgoose
   class Gateway
     def self.configured?
-      SiteSetting.xgoose_api_base_url.present? && SiteSetting.xgoose_api_key.present? && SiteSetting.xgoose_model.present?
+      SiteSetting.xgoose_api_base_url.present? && SiteSetting.xgoose_api_key.present? &&
+        SiteSetting.xgoose_model.present?
     end
     def self.endpoint
       uri = URI.parse(SiteSetting.xgoose_api_base_url.sub(%r{/+\z}, "") + "/chat/completions")
-      raise Error.new("invalid_configuration", 503) unless uri.is_a?(URI::HTTPS) && uri.host.present? && !uri.userinfo && !uri.query && !uri.fragment
+      unless uri.is_a?(URI::HTTPS) && uri.host.present? && !uri.userinfo && !uri.query &&
+               !uri.fragment
+        raise Error.new("invalid_configuration", 503)
+      end
       uri
     rescue URI::InvalidURIError
       raise Error.new("invalid_configuration", 503)
@@ -49,16 +53,28 @@ module DiscourseXgoose
         status = "interrupted"
         error = "connection_closed"
       rescue StandardError => e
-        error = e.is_a?(Error) ? e.code : (e.is_a?(Timeout::Error) ? "upstream_timeout" : "upstream_error")
+        error =
+          (
+            if e.is_a?(Error)
+              e.code
+            else
+              (e.is_a?(Timeout::Error) ? "upstream_timeout" : "upstream_error")
+            end
+          )
         begin
-          yield "data: #{JSON.generate(error: { message: error, type: 'xgoose_error' })}\n\n"
+          yield "data: #{JSON.generate(error: { message: error, type: "xgoose_error" })}\n\n"
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           status = "interrupted"
         end
       ensure
-        Quota.settle!(request, tokens: (status == "completed" ? collector.tokens : nil),
-          response: collector.message.merge("finish_reason" => collector.finish_reason), status: status, error: error,
-          duration: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round)
+        Quota.settle!(
+          request,
+          tokens: (status == "completed" ? collector.tokens : nil),
+          response: collector.message.merge("finish_reason" => collector.finish_reason),
+          status: status,
+          error: error,
+          duration: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round,
+        )
       end
     end
   end

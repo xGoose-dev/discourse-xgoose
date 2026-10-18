@@ -7,8 +7,14 @@ RSpec.describe DiscourseXgoose::Lease do
     SiteSetting.xgoose_site_concurrency = 1
     first = described_class.new(user, SecureRandom.uuid)
     first.acquire!
-    expect { described_class.new(user, SecureRandom.uuid).acquire! }.to raise_error(DiscourseXgoose::Error, "busy")
-    expect { described_class.new(other_user, SecureRandom.uuid).acquire! }.to raise_error(DiscourseXgoose::Error, "busy")
+    expect { described_class.new(user, SecureRandom.uuid).acquire! }.to raise_error(
+      DiscourseXgoose::Error,
+      "busy",
+    )
+    expect { described_class.new(other_user, SecureRandom.uuid).acquire! }.to raise_error(
+      DiscourseXgoose::Error,
+      "busy",
+    )
     first.release!
     next_lease = described_class.new(other_user, SecureRandom.uuid)
     expect { next_lease.acquire! }.not_to raise_error

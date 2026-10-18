@@ -19,7 +19,12 @@ module DiscourseXgoose
     def acquire!
       ttl = SiteSetting.xgoose_timeout_seconds + 90
       now = Time.now.to_i
-      result = Discourse.redis.eval(ACQUIRE, keys: @keys.map { |key| Discourse.redis.namespace_key(key) }, argv: [now, now + ttl, @id, SiteSetting.xgoose_site_concurrency, ttl])
+      result =
+        Discourse.redis.eval(
+          ACQUIRE,
+          keys: @keys.map { |key| Discourse.redis.namespace_key(key) },
+          argv: [now, now + ttl, @id, SiteSetting.xgoose_site_concurrency, ttl],
+        )
       raise Error.new("busy", 429) unless result == 1
       @acquired = true
     end

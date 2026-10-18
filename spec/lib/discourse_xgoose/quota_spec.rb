@@ -19,13 +19,19 @@ RSpec.describe DiscourseXgoose::Quota do
     request = reserve
     request.update!(expires_at: 1.minute.ago)
     described_class.reap!
-    expect(request.reload).to have_attributes(status: "interrupted", estimated: true, charged_tokens: 500)
+    expect(request.reload).to have_attributes(
+      status: "interrupted",
+      estimated: true,
+      charged_tokens: 500,
+    )
     expect(described_class.snapshot(user)[:remaining]).to eq(500)
   end
   it "does not charge or reserve twice for a repeated request ID" do
     id = SecureRandom.uuid
     described_class.reserve!(user, session, id, SecureRandom.uuid, body, 100)
-    expect { described_class.reserve!(user, session, id, SecureRandom.uuid, body, 100) }.to raise_error(DiscourseXgoose::Error, "duplicate_request")
+    expect {
+      described_class.reserve!(user, session, id, SecureRandom.uuid, body, 100)
+    }.to raise_error(DiscourseXgoose::Error, "duplicate_request")
     expect(described_class.snapshot(user)[:reserved]).to eq(100)
   end
   it "separates UTC calendar days and returns a UTC reset timestamp" do

@@ -46,6 +46,8 @@ In **Admin → Settings**, search for `xgoose`:
 3. Choose context, output, daily allowance, rate, concurrency, and log retention limits.
 4. Enable `xgoose_enabled` and reload the forum.
 
+For **GPT-6 Luna**, use `gpt-6-luna`, enable `xgoose_use_max_completion_tokens`, and enable `xgoose_disable_reasoning`. Luna requires `reasoning_effort: none` for function calls through Chat Completions. These options leave the browser Agent and the provider interface unchanged.
+
 The model must support streaming **OpenAI Chat Completions**, text messages, and function tool calls. The upstream should return streaming usage with `stream_options.include_usage`; providers that omit usage are charged conservatively. Responses API, image input, non-streaming mode, and per-member API keys are outside this version's interface.
 
 Defaults are 100,000 input + output tokens per user per UTC day, 2,048 output tokens per call, 20 model requests per user per minute, one concurrent call per user, eight concurrent calls across the site, eight model calls per question, a 120-second timeout, and 30 days of audit retention. Each limit is a site setting except the fixed one-call-per-user concurrency limit.

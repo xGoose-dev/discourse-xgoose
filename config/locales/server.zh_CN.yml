@@ -13,6 +13,9 @@ zh_CN:
     xgoose_max_turn_calls: 每次用户提问允许的模型调用次数上限。
     xgoose_timeout_seconds: 上游模型调用的总超时时间，单位为秒。
     xgoose_log_retention_days: 管理员私有审计日志保留天数，可能包含私信和受限帖子。
+    xgoose_use_max_completion_tokens: 使用 max_completion_tokens 替代 max_tokens（较新的 OpenAI
+      模型需要）。
+    xgoose_disable_reasoning: 发送 reasoning_effort=none（Luna 通过 Chat Completions 调用工具时需要）。
   xgoose:
     errors:
       generic: 请求失败。请开启新会话或联系站点管理员。

@@ -36,9 +36,19 @@ RSpec.describe "xGoose endpoints" do
   it "stores idempotent client events separately from server accounting" do
     sign_in(user)
     session = session_for(user)
-    event = { event_id: SecureRandom.uuid, turn_id: SecureRandom.uuid, sequence: 0, kind: "tool_start", payload: { name: "search_forum" } }
+    event = {
+      event_id: SecureRandom.uuid,
+      turn_id: SecureRandom.uuid,
+      sequence: 0,
+      kind: "tool_start",
+      payload: {
+        name: "search_forum",
+      },
+    }
     2.times do
-      post "/xgoose/sessions/#{session.id}/events.json", params: { events: [event] }.to_json, headers: origin.merge("CONTENT_TYPE" => "application/json")
+      post "/xgoose/sessions/#{session.id}/events.json",
+           params: { events: [event] }.to_json,
+           headers: origin.merge("CONTENT_TYPE" => "application/json")
       expect(response.status).to eq(200)
     end
     expect(session.events.count).to eq(1)
@@ -60,14 +70,53 @@ RSpec.describe "xGoose endpoints" do
   it "streams a tool-capable completion and saves the final answer and usage" do
     sign_in(user)
     session = session_for(user)
-    data = "data: #{ {choices: [{delta: {content: 'Answer'}, finish_reason: 'stop'}]}.to_json }\n\n" +
-      "data: #{ {choices: [], usage: {prompt_tokens: 10, completion_tokens: 5}}.to_json }\n\n" + "data: [DONE]\n\n"
-    stub_request(:post, "https://llm.example.com/v1/chat/completions").with(headers: { "Authorization" => "Bearer secret-never-public" }).to_return(status: 200, body: data, headers: { "Content-Type" => "text/event-stream" })
-    post "/xgoose/sessions/#{session.id}/chat/completions", params: { messages: [{ role: "user", content: "Hello" }] }.to_json,
-      headers: origin.merge("CONTENT_TYPE" => "application/json", "HTTP_X_XGOOSE_REQUEST_ID" => SecureRandom.uuid, "HTTP_X_XGOOSE_TURN_ID" => SecureRandom.uuid)
+    data =
+      "data: #{{ choices: [{ delta: { content: "Answer" }, finish_reason: "stop" }] }.to_json}\n\n" +
+        "data: #{{ choices: [], usage: { prompt_tokens: 10, completion_tokens: 5 } }.to_json}\n\n" +
+        "data: [DONE]\n\n"
+    stub_request(:post, "https://llm.example.com/v1/chat/completions").with(
+      headers: {
+        "Authorization" => "Bearer secret-never-public",
+      },
+    ).to_return(status: 200, body: data, headers: { "Content-Type" => "text/event-stream" })
+    post "/xgoose/sessions/#{session.id}/chat/completions",
+         params: { messages: [{ role: "user", content: "Hello" }] }.to_json,
+         headers:
+           origin.merge(
+             "CONTENT_TYPE" => "application/json",
+             "HTTP_X_XGOOSE_REQUEST_ID" => SecureRandom.uuid,
+             "HTTP_X_XGOOSE_TURN_ID" => SecureRandom.uuid,
+           )
     expect(response.status).to eq(200)
     expect(response.body).to include("Answer", "[DONE]")
-    expect(session.requests.last).to have_attributes(status: "completed", charged_tokens: 15, estimated: false)
+    expect(session.requests.last).to have_attributes(
+      status: "completed",
+      charged_tokens: 15,
+      estimated: false,
+    )
     expect(session.requests.last.response_message["content"]).to eq("Answer")
+  end
+  it "uses the reader's actual category and private-message permissions" do
+    group = Fabricate(:group)
+    group.add(user)
+    category = Fabricate(:private_category, group: group)
+    restricted = Fabricate(:post, topic: Fabricate(:topic, category: category))
+    message = Fabricate(:private_message_post, user: user)
+    sign_in(user)
+    get "/t/#{restricted.topic_id}.json"
+    expect(response.status).to eq(200)
+    get "/t/#{message.topic_id}.json"
+    expect(response.status).to eq(200)
+    sign_in(other_user)
+    get "/t/#{restricted.topic_id}.json"
+    expect(response.status).to eq(404)
+    get "/t/#{message.topic_id}.json"
+    expect(response.status).to eq(404)
+  end
+  it "serves the administrator log index ahead of the admin SPA catch-all" do
+    sign_in(admin)
+    get "/admin/plugins/xgoose"
+    expect(response.status).to eq(200)
+    expect(response.body).to include("<h1>xGoose audit logs</h1>")
   end
 end

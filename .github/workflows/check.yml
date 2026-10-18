@@ -16,4 +16,4 @@ jobs:
           ruby-version: '3.3'
       - run: npm ci
       - run: npm run check
-      - run: git diff --exit-code -- assets/javascripts/discourse/lib/
+      - run: git diff --exit-code -- assets/javascripts/discourse/lib/ docs/third-party-licenses.txt
