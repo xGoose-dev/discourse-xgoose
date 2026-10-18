@@ -1,0 +1,11 @@
+name: Feature request
+description: Suggest an improvement to forum research
+body:
+  - type: textarea
+    attributes:
+      label: What forum task should become easier?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Example workflow and expected result

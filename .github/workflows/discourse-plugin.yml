@@ -1,0 +1,15 @@
+name: Discourse integration
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  discourse:
+    strategy:
+      fail-fast: false
+      matrix:
+        core: [release/2026.9, latest]
+    uses: discourse/.github/.github/workflows/discourse-plugin.yml@v1
+    with:
+      core_ref: ${{ matrix.core }}
+      skip_linting: true
+      skip_annotations: true

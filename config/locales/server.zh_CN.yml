@@ -1,0 +1,48 @@
+---
+zh_CN:
+  site_settings:
+    xgoose_enabled: 启用 xGoose 论坛助手。审计日志：/admin/plugins/xgoose。
+    xgoose_api_base_url: OpenAI 兼容 API 的 HTTPS 基础地址，需要时包含 /v1。
+    xgoose_api_key: 仅服务端保存的上游 API 密钥，不发送到浏览器。
+    xgoose_model: 模型 ID，必须支持流式 Chat Completions 和工具调用。
+    xgoose_context_tokens: 请求上下文上限：以 UTF-8 字节数保守估计，包含输出预算。
+    xgoose_daily_tokens: 每人每天输入与输出 token 总额度，管理员同样受限，UTC 零点重置。
+    xgoose_max_output_tokens: 每次模型调用的输出 token 上限。
+    xgoose_requests_per_minute: 每个用户每分钟的模型调用上限。
+    xgoose_site_concurrency: 全站并发模型调用上限，每个用户最多一个。
+    xgoose_max_turn_calls: 每次用户提问允许的模型调用次数上限。
+    xgoose_timeout_seconds: 上游模型调用的总超时时间，单位为秒。
+    xgoose_log_retention_days: 管理员私有审计日志保留天数，可能包含私信和受限帖子。
+  xgoose:
+    errors:
+      generic: 请求失败。请开启新会话或联系站点管理员。
+      not_configured: 站点管理员尚未完成 AI 服务配置。
+      quota_exceeded: 今日剩余额度不足以处理本次请求，请等待重置或开始更短的新会话。
+      context_limit: 当前会话过长，请开启新会话。
+      turn_limit: 本次检索已达到步骤上限，请缩小问题范围后继续。
+      busy: 已有请求正在执行，或站点繁忙，请稍后重试。
+      rate_limited: 请求过于频繁，请稍后重试。
+      upstream_error: AI 服务未能完成请求，请稍后重试。
+      upstream_timeout: AI 服务超时，请尝试更小的问题。
+      upstream_incomplete: 连接在回答完成之前中断。
+      request_too_large: 请求内容过多，请开启更短的新会话。
+    admin:
+      title: xGoose 审计日志
+      back: 返回
+      user: 用户
+      status: 状态
+      created: 创建时间
+      filter: 筛选
+      after: 开始日期
+      before: 结束日期
+      next: 下一页
+      client_note: 输入快照包含之前的上下文。工具事件由客户端上报，不代表可信执行证据或计费依据。缺失结束事件或请求中断意味着记录不完整。
+      complete: 对话记录完整
+      incomplete: 对话记录不完整或仍在执行
+      export: 导出对话
+      input: 输入快照
+      output: 模型回答
+      client_events: 客户端上报的工具事件
+      delete: 删除日志
+      confirm_delete: 删除此会话及全部审计内容？此操作不可撤销。
+      delete_failed: 无法删除日志，可能仍有请求正在执行。

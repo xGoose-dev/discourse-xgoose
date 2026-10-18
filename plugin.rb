@@ -1,0 +1,20 @@
+# frozen_string_literal: true
+# name: discourse-xgoose
+# about: A browser-side research agent for your Discourse community.
+# version: 0.1.0
+# authors: xGoose
+# url: https://github.com/xGoose-dev/discourse-xgoose
+# required_version: 2026.9.0
+
+enabled_site_setting :xgoose_enabled
+register_asset "stylesheets/xgoose.scss"
+
+module ::DiscourseXgoose
+  PLUGIN_NAME = "discourse-xgoose"
+end
+require_relative "lib/discourse_xgoose/engine"
+
+after_initialize do
+  # Chat content belongs in the private audit tables, never in Rails request logs.
+  Rails.application.config.filter_parameters += [:messages, :tools, :events, :content, :arguments]
+end

@@ -1,0 +1,54 @@
+---
+zh_CN:
+  js:
+    xgoose:
+      title: xGoose 论坛助手
+      subtitle: 搜索帖子，阅读讨论，找到依据
+      open: 打开 xGoose
+      close: 关闭面板
+      new_chat: 新会话
+      you: 你
+      remaining: 剩余 %{count} token
+      resets: 重置时间：%{time}
+      conversation: 对话
+      welcome: 从社区讨论中找到答案
+      welcome_hint: 提出问题，xGoose 会搜索、阅读相关帖子，并附上来源。
+      summarize: 总结当前主题
+      related: 查找相关讨论
+      recent: 查看近期讨论
+      research_steps: 检索过程
+      running: 执行中
+      failed: 失败
+      done: 完成
+      input: 消息
+      placeholder: 询问论坛里的内容…
+      send: 发送
+      stop: 停止
+      privacy: 读取的内容会发送给站点的 AI 服务，并在管理员日志中保存设定的期限，其中可能包括受限主题和已启用的私信。
+      login_required: 登录论坛后即可使用 xGoose。
+      include_private: 允许读取我的私信
+      log_warning: 部分工具日志未能保存，管理员记录可能不完整。
+      errors:
+        generic: 请求失败。请开启新会话或联系站点管理员。
+        not_configured: 站点管理员尚未完成 AI 服务配置。
+        quota_exceeded: 今日剩余额度不足以处理本次请求，请等待重置或开始更短的新会话。
+        context_limit: 当前会话过长，请开启新会话。
+        turn_limit: 本次检索已达到步骤上限，请缩小问题范围后继续。
+        busy: 已有请求正在执行，或站点繁忙，请稍后重试。
+        rate_limited: 请求过于频繁，请稍后重试。
+        upstream_error: AI 服务未能完成请求，请稍后重试。
+        upstream_timeout: AI 服务超时，请尝试更小的问题。
+        upstream_incomplete: 连接在回答完成之前中断。
+        request_too_large: 请求内容过多，请开启更短的新会话。
+      tools:
+        search_forum: 搜索论坛
+        search_private_messages: 搜索私信
+        read_topic: 阅读主题
+        read_posts: 阅读帖子
+        categories: 读取分类
+        latest_topics: 查找近期主题
+        current_topic: 阅读当前主题
+      prompts:
+        summarize: 阅读并总结当前主题，附上引用帖子的链接。
+        related: 阅读当前主题，搜索相关讨论，并附引用说明它们之间的关系。
+        recent: 查看论坛近期讨论，阅读相关帖子后总结。

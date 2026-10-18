@@ -1,0 +1,64 @@
+---
+en:
+  js:
+    xgoose:
+      title: xGoose research assistant
+      subtitle: Search, read, and connect the discussion
+      open: Open xGoose
+      close: Close panel
+      new_chat: New chat
+      you: You
+      remaining: "%{count} tokens remaining"
+      resets: Resets %{time}
+      conversation: Conversation
+      welcome: Find answers in your community
+      welcome_hint: Ask a question. xGoose reads the relevant posts and links to its
+        sources.
+      summarize: Summarize this topic
+      related: Find related discussions
+      recent: Explore recent discussions
+      research_steps: Research steps
+      running: Running
+      failed: Failed
+      done: Done
+      input: Message
+      placeholder: Ask about your forum…
+      send: Send
+      stop: Stop
+      privacy: Read content is sent to the site’s AI provider and retained in administrator
+        logs for the configured period. This can include restricted topics and enabled
+        private messages.
+      login_required: Log in to the forum to use xGoose.
+      include_private: Include my private messages
+      log_warning: Some tool logs could not be saved. The administrator transcript
+        may be incomplete.
+      errors:
+        generic: The request failed. Try a new chat or contact a site administrator.
+        not_configured: The site administrator needs to configure the AI provider.
+        quota_exceeded: Your daily token allowance is used up or too small for this
+          request. Wait for the reset or start a shorter chat.
+        context_limit: This conversation is too long. Start a new chat.
+        turn_limit: This research reached its step limit. Ask a narrower follow-up
+          question.
+        busy: A request is already running, or the site is busy. Wait a moment and
+          try again.
+        rate_limited: Too many requests. Wait before trying again.
+        upstream_error: The AI provider could not complete the request. Try again
+          later.
+        upstream_timeout: The AI provider timed out. Try a smaller question.
+        upstream_incomplete: The connection ended before the answer was complete.
+        request_too_large: The request is too large. Start a shorter chat.
+      tools:
+        search_forum: Search forum
+        search_private_messages: Search private messages
+        read_topic: Read topic
+        read_posts: Read posts
+        categories: List categories
+        latest_topics: Find recent topics
+        current_topic: Read current topic
+      prompts:
+        summarize: Read and summarize the current topic. Cite the posts you use.
+        related: Read the current topic, then search for related discussions and explain
+          the connections with citations.
+        recent: Show recent discussions in this forum and read the most relevant ones
+          before summarizing.

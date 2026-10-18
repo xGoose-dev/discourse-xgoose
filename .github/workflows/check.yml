@@ -1,0 +1,19 @@
+name: Build and unit tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  browser-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - run: npm ci
+      - run: npm run check
+      - run: git diff --exit-code -- assets/javascripts/discourse/lib/

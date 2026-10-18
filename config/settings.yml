@@ -1,0 +1,41 @@
+plugins:
+  xgoose_enabled:
+    default: false
+    client: true
+  xgoose_api_base_url:
+    default: ""
+  xgoose_api_key:
+    default: ""
+    secret: true
+  xgoose_model:
+    default: ""
+  xgoose_context_tokens:
+    default: 32768
+    min: 4096
+    max: 262144
+  xgoose_daily_tokens:
+    default: 100000
+    min: 1
+  xgoose_max_output_tokens:
+    default: 2048
+    min: 128
+    max: 16384
+  xgoose_requests_per_minute:
+    default: 20
+    min: 1
+  xgoose_site_concurrency:
+    default: 8
+    min: 1
+    max: 32
+  xgoose_max_turn_calls:
+    default: 8
+    min: 1
+    max: 20
+  xgoose_timeout_seconds:
+    default: 120
+    min: 10
+    max: 300
+  xgoose_log_retention_days:
+    default: 30
+    min: 1
+    max: 365

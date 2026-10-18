@@ -1,0 +1,30 @@
+// Use the forum's own typography and surface colors. The launcher carries xGoose's identity.
+.xgoose-launcher {
+  position: fixed; inset-inline-end: 1.25rem; bottom: calc(1.25rem + env(safe-area-inset-bottom));
+  z-index: 1100; inline-size: 48px; block-size: 48px; border: 0; border-radius: 16px;
+  background: linear-gradient(135deg, #6366f1, #a855f7 65%, #ec4899); color: #fff;
+  font-size: 1.6rem; cursor: pointer; box-shadow: 0 4px 20px #6366f140;
+}
+.xgoose-panel {
+  position: fixed; inset: 0; z-index: 1101; display: flex; flex-direction: column;
+  background: var(--secondary); color: var(--primary); font: inherit; text-align: start;
+  border: 1px solid var(--primary-low); box-shadow: 0 12px 60px #0003;
+  header { display: flex; align-items: center; gap: .5rem; padding: .85rem 1rem; border-bottom: 1px solid var(--primary-low); }
+  header > div { flex: 1; }
+  header strong { display: block; font-size: 1.1rem; }
+  header span { color: var(--primary-medium); font-size: .8rem; }
+  button { min-block-size: 44px; cursor: pointer; font: inherit; }
+  button:not(.btn) { color: var(--primary); border: 1px solid var(--primary-low); background: var(--secondary); border-radius: 6px; padding: .4rem .7rem; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 2px; }
+  form { padding: .75rem 1rem max(.75rem, env(safe-area-inset-bottom)); border-top: 1px solid var(--primary-low); }
+  textarea { display: block; box-sizing: border-box; inline-size: 100%; min-block-size: 80px; max-block-size: 180px; resize: vertical; margin: .5rem 0; color: inherit; background: var(--secondary); border: 1px solid var(--primary-low-mid); border-radius: 6px; font: inherit; }
+}
+.xgoose-thread { flex: 1; overflow-y: auto; overflow-x: hidden; min-block-size: 0; padding: 1rem; overscroll-behavior: contain; }
+.xgoose-quota { padding: .5rem 1rem; font-size: .75rem; color: var(--primary-medium); span { display: block; } }
+.xgoose-message { margin-bottom: 1.25rem; overflow-wrap: anywhere; > strong { font-size: .8rem; color: var(--primary-medium); } .cooked { margin-top: .4rem; } &[data-role="user"] { border-inline-start: 3px solid #6366f1; padding-inline-start: .75rem; } pre { overflow-x: auto; } img { max-inline-size: 100%; } }
+.xgoose-welcome { padding-block: 1rem; h2 { font-size: 1.35rem; } p { color: var(--primary-medium); } button { display: block; inline-size: 100%; text-align: start; margin-bottom: .5rem; } }
+.xgoose-compose-actions { display: flex; align-items: center; gap: .75rem; small { flex: 1; font-size: .7rem; line-height: 1.4; color: var(--primary-medium); } }
+.xgoose-private { display: flex; align-items: center; gap: .5rem; font-size: .85rem; min-block-size: 44px; input { margin: 0; } }
+.xgoose-error { margin: .25rem 1rem; color: var(--danger); font-size: .85rem; }
+.xgoose-tools { font-size: .8rem; color: var(--primary-medium); summary { cursor: pointer; min-block-size: 32px; } details { margin-inline-start: .5rem; } pre { max-block-size: 200px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; } }
+@media (min-width: 640px) { .xgoose-panel { inset: auto 1.25rem 5rem auto; inline-size: min(440px, calc(100vw - 2.5rem)); block-size: min(760px, calc(100dvh - 7rem)); border-radius: 12px; overflow: hidden; } }
