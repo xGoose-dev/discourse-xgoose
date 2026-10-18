@@ -3,25 +3,28 @@ module DiscourseXgoose
   class Quota
     def self.snapshot(user)
       row = Usage.find_by(user_id: user.id, day: Time.now.utc.to_date)
+      used, reserved = row&.used_microusd.to_i, row&.reserved_microusd.to_i
       {
-        limit: SiteSetting.xgoose_daily_tokens,
+        limit_usd: Pricing.limit / 1_000_000.0,
+        used_usd: used / 1_000_000.0,
+        reserved_usd: reserved / 1_000_000.0,
+        remaining_usd: [Pricing.limit - used - reserved, 0].max / 1_000_000.0,
         used: row&.used.to_i,
         reserved: row&.reserved.to_i,
-        remaining: [SiteSetting.xgoose_daily_tokens - row&.used.to_i - row&.reserved.to_i, 0].max,
         resets_at: (Time.now.utc.to_date + 1).to_time(:utc).iso8601,
       }
     end
-
     def self.reserve!(user, session, request_id, turn_id, body, amount)
       day = Time.now.utc.to_date
-      # Unique index also handles the first request in two concurrent processes.
+      rates = Pricing.rates
+      dollars = Pricing.reserve(amount, rates)
       Usage.insert_all(
         [{ user_id: user.id, day: day, used: 0, reserved: 0 }],
         unique_by: %i[user_id day],
       )
       Usage.transaction do
         usage = Usage.lock.find_by!(user_id: user.id, day: day)
-        if usage.used + usage.reserved + amount > SiteSetting.xgoose_daily_tokens
+        if usage.used_microusd + usage.reserved_microusd + dollars > Pricing.limit
           raise Error.new("quota_exceeded", 429)
         end
         if session.requests.where(turn_id: turn_id).count >= SiteSetting.xgoose_max_turn_calls
@@ -33,40 +36,64 @@ module DiscourseXgoose
             request_id: request_id,
             turn_id: turn_id,
             model: body[:model],
-            messages: body[:messages],
+            messages: Payload.audit_messages(body[:messages]),
             reserved_tokens: amount,
+            reserved_microusd: dollars,
+            pricing_rates: rates,
             usage_date: day,
             expires_at: Time.now.utc + SiteSetting.xgoose_timeout_seconds + 90,
           )
-        usage.update!(reserved: usage.reserved + amount)
+        usage.update!(
+          reserved: usage.reserved + amount,
+          reserved_microusd: usage.reserved_microusd + dollars,
+        )
         request
       end
     rescue ActiveRecord::RecordNotUnique
       raise Error.new("duplicate_request", 409)
     end
-
     def self.settle!(
       request,
       tokens: nil,
+      usage: nil,
       response: {},
       status: "completed",
       error: nil,
       duration: nil
     )
-      # Consistent lock ordering with reserve: usage before request.
       Usage.transaction do
-        usage = Usage.lock.find_by!(user_id: request.user_id, day: request.usage_date)
+        ledger = Usage.lock.find_by!(user_id: request.user_id, day: request.usage_date)
         request.lock!
         return unless request.status == "reserved"
-        actual = tokens.is_a?(Integer) && tokens >= 0
-        charged = actual ? tokens : request.reserved_tokens
-        usage.update!(
-          reserved: [usage.reserved - request.reserved_tokens, 0].max,
-          used: usage.used + charged,
+        actual = usage.is_a?(Hash) || (tokens.is_a?(Integer) && tokens >= 0)
+        usage ||= { "prompt_tokens" => tokens, "completion_tokens" => 0 } if actual
+        charged =
+          (
+            if actual
+              usage["prompt_tokens"].to_i + usage["completion_tokens"].to_i
+            else
+              request.reserved_tokens
+            end
+          )
+        dollars =
+          (
+            if actual
+              Pricing.cost(usage, request.pricing_rates.presence || Pricing.rates)
+            else
+              request.reserved_microusd
+            end
+          )
+        ledger.update!(
+          reserved: [ledger.reserved - request.reserved_tokens, 0].max,
+          used: ledger.used + charged,
+          reserved_microusd: [ledger.reserved_microusd - request.reserved_microusd, 0].max,
+          used_microusd: ledger.used_microusd + dollars,
         )
         request.update!(
           charged_tokens: charged,
+          charged_microusd: dollars,
           estimated: !actual,
+          provider_usage: usage || {},
           response_message: response,
           status: status,
           error_code: error,
@@ -74,7 +101,6 @@ module DiscourseXgoose
         )
       end
     end
-
     def self.reap!
       Request
         .where(status: "reserved")

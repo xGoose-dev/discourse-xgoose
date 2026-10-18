@@ -69,7 +69,7 @@ module DiscourseXgoose
       ensure
         Quota.settle!(
           request,
-          tokens: (status == "completed" ? collector.tokens : nil),
+          usage: (status == "completed" ? collector.usage : nil),
           response: collector.message.merge("finish_reason" => collector.finish_reason),
           status: status,
           error: error,

@@ -2,8 +2,10 @@ import Component from "@glimmer/component";
 import { service } from "@ember/service";
 import { tracked } from "@glimmer/tracking";
 import { action } from "@ember/object";
+import { registerDestructor } from "@ember/destroyable";
 import { on } from "@ember/modifier";
 import { concat } from "@ember/helper";
+import { fn } from "@ember/helper";
 import didInsert from "@ember/render-modifiers/modifiers/did-insert";
 import didUpdate from "@ember/render-modifiers/modifiers/did-update";
 import { i18n } from "discourse-i18n";
@@ -13,22 +15,21 @@ export default class XgoosePanel extends Component {
   @service currentUser;
   @tracked draft = "";
   followOutput = true;
-  @action watchScroll(event) {
-    const e = event.currentTarget;
-    this.followOutput = e.scrollHeight - e.scrollTop - e.clientHeight < 100;
-  }
-  @action scrollThread(element) {
-    if (this.followOutput)
-      requestAnimationFrame(() => {
-        if (element.isConnected) element.scrollTop = element.scrollHeight;
-      });
-  }
   get remaining() {
-    return this.xgoose.config?.quota?.remaining?.toLocaleString() || "0";
+    return `$${(this.xgoose.config?.quota?.remaining_usd || 0).toFixed(2)}`;
+  }
+  get daily() {
+    return `$${(this.xgoose.config?.quota?.limit_usd || 2).toFixed(2)}`;
+  }
+  get cost() {
+    return `$${this.xgoose.costUsd.toFixed(5)}`;
+  }
+  get model() {
+    return this.xgoose.config?.model || "Luna";
   }
   get resetTime() {
-    const date = this.xgoose.config?.quota?.resets_at;
-    return date ? new Date(date).toLocaleString() : "";
+    const d = this.xgoose.config?.quota?.resets_at;
+    return d ? new Date(d).toLocaleString() : "";
   }
   get errorText() {
     return this.xgoose.error
@@ -37,13 +38,42 @@ export default class XgoosePanel extends Component {
         })
       : "";
   }
+  userScrollingUntil = 0;
+  observer = null;
+  constructor() {
+    super(...arguments);
+    registerDestructor(this, () => this.observer?.disconnect());
+  }
+  @action scrollIntent(event) {
+    this.userScrollingUntil = performance.now() + 1500;
+    if (event.type === "wheel" && event.deltaY < 0) this.followOutput = false;
+  }
+  @action watchScroll(event) {
+    if (performance.now() > this.userScrollingUntil) return;
+    const e = event.currentTarget;
+    this.followOutput = e.scrollHeight - e.scrollTop - e.clientHeight < 100;
+  }
+  @action observeThread(element) {
+    this.observer?.disconnect();
+    this.observer = new ResizeObserver(() => this.scrollThread(element));
+    this.observer.observe(element.firstElementChild);
+    this.scrollThread(element);
+  }
+  @action scrollThread(element) {
+    if (this.followOutput)
+      requestAnimationFrame(() => {
+        if (element.isConnected) element.scrollTop = element.scrollHeight;
+      });
+  }
   @action updateDraft(event) {
     this.draft = event.target.value;
   }
   @action send(event) {
     event.preventDefault();
+    if (this.xgoose.busy) return;
     const text = this.draft;
     this.draft = "";
+    this.followOutput = true;
     this.xgoose.send(text);
   }
   @action shortcut(event) {
@@ -51,9 +81,17 @@ export default class XgoosePanel extends Component {
       i18n(`xgoose.prompts.${event.currentTarget.dataset.prompt}`),
     );
   }
+  @action toggle() {
+    this.draft = "";
+    this.xgoose.toggle();
+  }
+  @action async newChat() {
+    this.draft = "";
+    await this.xgoose.newChat();
+  }
   @action keydown(event) {
     if (event.key === "Escape") {
-      this.xgoose.open = false;
+      this.toggle();
       document.querySelector(".xgoose-launcher")?.focus();
     }
     if (
@@ -65,7 +103,25 @@ export default class XgoosePanel extends Component {
       this.send(event);
   }
   @action focus(element) {
-    element.querySelector("textarea,button")?.focus();
+    (
+      element.querySelector("textarea") || element.querySelector("button")
+    )?.focus();
+  }
+  @action chooseImage() {
+    document.querySelector("#xgoose-images")?.click();
+  }
+  @action files(event) {
+    this.xgoose.attach(Array.from(event.target.files));
+    event.target.value = "";
+  }
+  @action paste(event) {
+    const files = Array.from(event.clipboardData?.files || []).filter((f) =>
+      f.type.startsWith("image/"),
+    );
+    if (files.length) {
+      event.preventDefault();
+      this.xgoose.attach(files);
+    }
   }
   <template>
     <button
@@ -74,132 +130,245 @@ export default class XgoosePanel extends Component {
       aria-label={{i18n "xgoose.open"}}
       aria-expanded={{this.xgoose.open}}
       aria-controls="xgoose-panel"
-      {{on "click" this.xgoose.toggle}}
+      {{on "click" this.toggle}}
     >✦</button>
     {{#if this.xgoose.open}}
       <section
         id="xgoose-panel"
-        class="xgoose-panel"
+        class="xgoose-panel {{if this.xgoose.wide 'is-wide'}}"
         aria-label={{i18n "xgoose.title"}}
         {{on "keydown" this.keydown}}
         {{didInsert this.focus}}
       >
-        <header>
-          <div><strong>xGoose</strong><span>{{i18n
-                "xgoose.subtitle"
-              }}</span></div>
-          <button
-            type="button"
-            title={{i18n "xgoose.new_chat"}}
-            {{on "click" this.xgoose.newChat}}
-          >{{i18n "xgoose.new_chat"}}</button>
-          <button
-            type="button"
-            aria-label={{i18n "xgoose.close"}}
-            {{on "click" this.xgoose.toggle}}
-          >×</button>
+        <header class="xgoose-header">
+          <span class="xgoose-brand-mark" aria-hidden="true">✦</span><div
+            class="xgoose-brand"
+          ><strong>xGoose<span> / {{i18n "xgoose.forum"}}</span></strong><small
+            ><i></i>{{this.model}}</small></div>
+          <div class="xgoose-header-actions">
+            <button
+              type="button"
+              aria-label={{i18n "xgoose.history"}}
+              title={{i18n "xgoose.history"}}
+              aria-pressed={{this.xgoose.showHistory}}
+              {{on "click" this.xgoose.toggleHistory}}
+            >◷</button>
+            <button
+              type="button"
+              aria-label={{i18n "xgoose.new_chat"}}
+              title={{i18n "xgoose.new_chat"}}
+              {{on "click" this.newChat}}
+            >＋</button>
+            <button
+              type="button"
+              class="xgoose-expand"
+              aria-label={{i18n "xgoose.expand"}}
+              title={{i18n "xgoose.expand"}}
+              {{on "click" this.xgoose.toggleWide}}
+            >⤢</button>
+            <button
+              type="button"
+              aria-label={{i18n "xgoose.close"}}
+              title={{i18n "xgoose.close"}}
+              {{on "click" this.toggle}}
+            >×</button>
+          </div>
         </header>
         {{#if this.currentUser}}
-          <div class="xgoose-quota">{{i18n
-              "xgoose.remaining"
-              count=this.remaining
-            }}<span title={{this.resetTime}}>{{i18n
-                "xgoose.resets"
-                time=this.resetTime
+          <div class="xgoose-quota" title={{this.resetTime}}><span>{{i18n
+                "xgoose.budget"
+              }}
+              <strong>{{this.remaining}}</strong>
+              /
+              {{this.daily}}</span><span>{{i18n
+                "xgoose.daily_reset"
               }}</span></div>
-          <div
-            class="xgoose-thread"
-            {{on "scroll" this.watchScroll}}
-            {{didInsert this.scrollThread}}
-            {{didUpdate
-              this.scrollThread
-              this.xgoose.messages
-              this.xgoose.tools
-            }}
-            role="log"
-            aria-label={{i18n "xgoose.conversation"}}
-            aria-live="polite"
-            aria-busy={{this.xgoose.busy}}
-          >
-            {{#unless this.xgoose.messages.length}}
-              <div class="xgoose-welcome"><h2>{{i18n "xgoose.welcome"}}</h2><p
-                >{{i18n "xgoose.welcome_hint"}}</p>
-                <button
-                  type="button"
-                  data-prompt="summarize"
-                  {{on "click" this.shortcut}}
-                >{{i18n "xgoose.summarize"}}</button>
-                <button
-                  type="button"
-                  data-prompt="related"
-                  {{on "click" this.shortcut}}
-                >{{i18n "xgoose.related"}}</button>
-                <button
-                  type="button"
-                  data-prompt="recent"
-                  {{on "click" this.shortcut}}
-                >{{i18n "xgoose.recent"}}</button>
-              </div>
-            {{/unless}}
-            {{#each this.xgoose.messages key="id" as |message|}}<XgooseMessage
-                @message={{message}}
-              />{{/each}}
-            {{#if this.xgoose.tools.length}}
-              <details class="xgoose-tools"><summary>{{i18n
-                    "xgoose.research_steps"
-                  }}</summary>
-                {{#each this.xgoose.tools key="id" as |tool|}}<details><summary
-                    >{{i18n (concat "xgoose.tools." tool.name)}}
-                      —
-                      {{if
-                        tool.running
-                        (i18n "xgoose.running")
-                        (if
-                          tool.failed
-                          (i18n "xgoose.failed")
-                          (i18n "xgoose.done")
-                        )
-                      }}</summary><pre>{{tool.details}}</pre></details>{{/each}}
-              </details>
-            {{/if}}
-          </div>
-          {{#if this.xgoose.error}}<p
-              class="xgoose-error"
-              role="alert"
-            >{{this.errorText}}</p>{{/if}}
-          {{#if this.xgoose.logWarning}}<p class="xgoose-error">{{i18n
-                "xgoose.log_warning"
-              }}</p>{{/if}}
-          <form {{on "submit" this.send}}>
-            <label class="xgoose-private"><input
-                type="checkbox"
-                checked={{this.xgoose.includePrivate}}
-                disabled={{this.xgoose.busy}}
-                {{on "change" this.xgoose.togglePrivate}}
-              />{{i18n "xgoose.include_private"}}</label>
-            <label class="sr-only" for="xgoose-input">{{i18n
-                "xgoose.input"
-              }}</label>
-            <textarea
-              id="xgoose-input"
-              value={{this.draft}}
-              rows="3"
-              maxlength="12000"
-              placeholder={{i18n "xgoose.placeholder"}}
-              {{on "input" this.updateDraft}}
-            ></textarea>
-            <div class="xgoose-compose-actions"><small>{{i18n
-                  "xgoose.privacy"
-                }}</small>
-              {{#if this.xgoose.busy}}<button
-                  type="button"
-                  {{on "click" this.xgoose.stop}}
-                >{{i18n "xgoose.stop"}}</button>{{else}}<button
-                  type="submit"
-                  class="btn btn-primary"
-                >{{i18n "xgoose.send"}}</button>{{/if}}
+          {{#if this.xgoose.showHistory}}
+            <div class="xgoose-history"><h2>{{i18n "xgoose.history"}}</h2><p
+              >{{i18n "xgoose.history_hint"}}</p>
+              {{#each this.xgoose.history key="id" as |chat|}}<div
+                  class="xgoose-history-row"
+                ><button
+                    type="button"
+                    {{on "click" (fn this.xgoose.restore chat.id)}}
+                  ><strong>{{chat.title}}</strong><small>{{chat.savedLabel}}
+                      ·
+                      {{chat.costLabel}}</small></button><button
+                    type="button"
+                    aria-label={{i18n "xgoose.delete_chat"}}
+                    title={{i18n "xgoose.delete_chat"}}
+                    {{on "click" (fn this.xgoose.deleteHistory chat.id)}}
+                  >×</button></div>{{else}}<p>{{i18n
+                    "xgoose.history_empty"
+                  }}</p>{{/each}}
             </div>
-          </form>
+          {{else}}
+            <div
+              class="xgoose-thread"
+              {{on "scroll" this.watchScroll}}
+              {{on "wheel" this.scrollIntent}}
+              {{on "touchmove" this.scrollIntent}}
+              {{on "pointerdown" this.scrollIntent}}
+              {{didInsert this.observeThread}}
+              {{didUpdate
+                this.scrollThread
+                this.xgoose.messages
+                this.xgoose.tools
+              }}
+              role="log"
+              aria-label={{i18n "xgoose.conversation"}}
+              aria-live="polite"
+              aria-busy={{this.xgoose.busy}}
+            ><div class="xgoose-thread-content">
+                {{#unless this.xgoose.messages.length}}<div
+                    class="xgoose-welcome"
+                  ><div class="xgoose-welcome-icon">✦</div><div
+                      class="xgoose-eyebrow"
+                    >{{i18n "xgoose.eyebrow"}}</div><h2>{{i18n
+                        "xgoose.welcome"
+                      }}</h2><p>{{i18n "xgoose.welcome_hint"}}</p><div
+                      class="xgoose-shortcuts"
+                    >
+                      <button
+                        type="button"
+                        data-prompt="summarize"
+                        {{on "click" this.shortcut}}
+                      ><span>≋</span>{{i18n "xgoose.summarize"}}<span
+                        >↗</span></button>
+                      <button
+                        type="button"
+                        data-prompt="related"
+                        {{on "click" this.shortcut}}
+                      ><span>⌕</span>{{i18n "xgoose.related"}}<span
+                        >↗</span></button>
+                      <button
+                        type="button"
+                        data-prompt="recent"
+                        {{on "click" this.shortcut}}
+                      ><span>◷</span>{{i18n "xgoose.recent"}}<span
+                        >↗</span></button>
+                    </div><small>{{i18n
+                        "xgoose.fresh_hint"
+                      }}</small></div>{{/unless}}
+                {{#each
+                  this.xgoose.messages key="id"
+                  as |message|
+                }}<XgooseMessage @message={{message}} />{{/each}}
+                {{#if this.xgoose.busy}}<div class="xgoose-thinking"><span
+                    >✦</span>{{if
+                      this.xgoose.compacting
+                      (i18n "xgoose.compacting")
+                      (i18n "xgoose.thinking")
+                    }}</div>{{/if}}
+                {{#if this.xgoose.tools.length}}<details
+                    class="xgoose-tools"
+                  ><summary>{{i18n "xgoose.research_steps"}}
+                      <span>{{this.xgoose.tools.length}}</span></summary>{{#each
+                      this.xgoose.tools key="id"
+                      as |tool|
+                    }}<details><summary>{{i18n
+                            (concat "xgoose.tools." tool.name)
+                          }}
+                          ·
+                          {{if
+                            tool.running
+                            (i18n "xgoose.running")
+                            (if
+                              tool.failed
+                              (i18n "xgoose.failed")
+                              (i18n "xgoose.done")
+                            )
+                          }}</summary><pre
+                        >{{tool.details}}</pre></details>{{/each}}</details>{{/if}}
+              </div></div>
+            {{#if this.xgoose.error}}<p
+                class="xgoose-error"
+                role="alert"
+              >{{this.errorText}}</p>{{/if}}
+            {{#if this.xgoose.logWarning}}<p class="xgoose-error">{{i18n
+                  "xgoose.log_warning"
+                }}</p>{{/if}}
+            {{#if this.xgoose.storageWarning}}<p class="xgoose-error">{{i18n
+                  "xgoose.storage_warning"
+                }}</p>{{/if}}
+            <form class="xgoose-composer" {{on "submit" this.send}}>
+              {{#if this.xgoose.attachments.length}}<div
+                  class="xgoose-attachments"
+                >{{#each this.xgoose.attachments key="id" as |image|}}<div><img
+                        src={{image.dataUrl}}
+                        alt={{image.name}}
+                      /><button
+                        type="button"
+                        aria-label={{i18n "xgoose.remove_image"}}
+                        {{on
+                          "click"
+                          (fn this.xgoose.removeAttachment image.id)
+                        }}
+                      >×</button></div>{{/each}}</div>{{/if}}
+              <label class="sr-only" for="xgoose-input">{{i18n
+                  "xgoose.input"
+                }}</label><textarea
+                id="xgoose-input"
+                value={{this.draft}}
+                rows="3"
+                maxlength="12000"
+                placeholder={{i18n "xgoose.placeholder"}}
+                {{on "input" this.updateDraft}}
+                {{on "paste" this.paste}}
+              ></textarea>
+              <div class="xgoose-compose-actions"><input
+                  id="xgoose-images"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  multiple
+                  hidden
+                  {{on "change" this.files}}
+                /><button
+                  type="button"
+                  class="xgoose-attach"
+                  aria-label={{i18n "xgoose.attach"}}
+                  title={{i18n "xgoose.attach"}}
+                  disabled={{this.xgoose.busy}}
+                  {{on "click" this.chooseImage}}
+                >＋ <span>{{i18n "xgoose.image"}}</span></button><label
+                  class="xgoose-private"
+                ><input
+                    type="checkbox"
+                    checked={{this.xgoose.includePrivate}}
+                    disabled={{this.xgoose.busy}}
+                    {{on "change" this.xgoose.togglePrivate}}
+                  />{{i18n "xgoose.include_private"}}</label><div
+                  class="xgoose-send-spacer"
+                ></div>{{#if this.xgoose.busy}}<button
+                    type="button"
+                    class="xgoose-send"
+                    {{on "click" this.xgoose.stop}}
+                    aria-label={{i18n "xgoose.stop"}}
+                  >■</button>{{else}}<button
+                    type="submit"
+                    class="xgoose-send"
+                    aria-label={{i18n "xgoose.send"}}
+                  >↑</button>{{/if}}</div>
+            </form>
+            <div class="xgoose-context"><span>{{i18n
+                  "xgoose.chat_cost"
+                  cost=this.cost
+                }}</span><span title={{i18n "xgoose.auto_summary"}}>{{i18n
+                  "xgoose.context"
+                  percent=this.xgoose.contextPercent
+                }}
+                ·
+                {{i18n
+                  "xgoose.summaries"
+                  count=this.xgoose.compactions
+                }}</span></div>
+            {{#if this.xgoose.summary}}<details class="xgoose-summary"><summary
+                >{{i18n "xgoose.summary"}}</summary><p
+                >{{this.xgoose.summary}}</p></details>{{/if}}
+            <details class="xgoose-privacy"><summary>{{i18n
+                  "xgoose.privacy_label"
+                }}</summary><p>{{i18n "xgoose.privacy"}}</p></details>
+          {{/if}}
         {{else}}<p class="xgoose-welcome">{{i18n
               "xgoose.login_required"
             }}</p>{{/if}}

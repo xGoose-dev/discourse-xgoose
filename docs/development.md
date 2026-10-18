@@ -17,7 +17,7 @@ LOAD_PLUGINS=1 RAILS_ENV=test bundle exec rspec plugins/discourse-xgoose/spec
 bin/dev
 ```
 
-The RSpec suite uses WebMock for the HTTPS model endpoint. Tests cover split SSE, permissions, quota reservation and settlement, Redis concurrency, payload validation, and administrator log access. The browser suite uses an isolated development forum and the deterministic local HTTPS provider in `scripts/mock-provider.mjs`; it never calls a paid model.
+The RSpec suite uses WebMock for the HTTPS model endpoint. Tests cover split SSE, permissions, quota reservation and settlement, Redis concurrency, payload validation, and administrator log access. The browser suite uses an isolated development forum and the deterministic local HTTPS provider in `scripts/mock-provider.mjs`; the default suite does not call a paid model.
 
 ## Local browser integration
 
@@ -35,8 +35,20 @@ The tests exercise a real login, Pi tool loop, browser-side forum reads, Rails p
 
 ## Design and interfaces
 
-The panel uses Discourse's typography and theme surfaces. A single xGoose gradient launcher carries the brand; content and citations get most of the space. English strings are the source, with `zh_CN` translations. Avoid storing chat text in browser storage.
+The panel uses Discourse's typography and theme surfaces. A single xGoose gradient launcher carries the brand; content and citations get most of the space. English strings are the source, with `zh_CN` translations. Local history uses IndexedDB, scoped by origin, base path, and account. Keep the full visible transcript separate from the summarized model context; never store provider credentials in the browser.
 
 Forum tool code belongs in `frontend/tools.js`, the Pi adapter in `frontend/agent.js`, and the Discourse lifecycle adapter in the Ember service. Rails validates the proxy interface independently of browser behavior. Add a tool name to both sides only when its behavior fits the read-only forum scope.
 
-Quota uses a PostgreSQL row lock per user/day and durable reservations. Redis leases use explicitly namespaced keys and expire after the configured timeout plus a grace period. Expired reservations are charged conservatively by cleanup; usage remains independent of transcript content. Never derive billing from client events.
+Quota uses a PostgreSQL row lock per user/day and durable micro-USD reservations and per-request price snapshots. Redis leases use explicitly namespaced keys and expire after the configured timeout plus a grace period. Expired reservations are charged conservatively by cleanup; usage remains independent of transcript content. Never derive billing from client events.
+
+## Explicit live-provider validation
+
+Configure a vision-capable OpenAI Chat Completions model in the development forum, including server-only key and accurate prices. The live suite creates a synthetic image, performs real model calls, triggers automatic context summarization, and checks browser history, image redaction, source citations, costs, and administrator exports. It spends provider credit only when explicitly enabled:
+
+```sh
+XGOOSE_REAL_API=1 XGOOSE_TEST_PASSWORD=your-local-fixture-password XGOOSE_TEST_MEMBER_PASSWORD=your-local-member-password npx playwright test tests/live-browser.spec.mjs
+```
+
+Never put a real key in this command, fixture files, screenshots, or committed configuration. Live tests expect the isolated Luna fixture and a $2 daily budget.
+
+Set `XGOOSE_TEST_MEMBER_PASSWORD` when seeding to create the optional regular-member fixture. Supplying it to the live test also verifies history isolation after switching accounts.

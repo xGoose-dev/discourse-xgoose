@@ -12,11 +12,14 @@
 - Searches and reads forum content directly in the member's browser, using their existing Discourse permissions.
 - Reads restricted categories that the member can access. Private message tools require the member to enable **Include my private messages**.
 - Uses one administrator-configured OpenAI-compatible model. Members never receive the upstream API key.
-- Enforces daily token allowances, request rates, and concurrency on the server, including for administrators.
+- Enforces daily dollar budgets (default **$2 per member**), request rates, and concurrency on the server, including for administrators.
 - Keeps private administrator audit logs with request snapshots, partial responses, usage, and client-reported tool events.
+- Attaches up to two images per message for model understanding and forum research, with browser-side resizing.
+- Saves account-scoped chat history and images locally in IndexedDB; reopening the panel starts a fresh chat, with explicit history restore.
+- Automatically summarizes earlier Pi context as conversations grow, while retaining the full local transcript.
 - English and Simplified Chinese interfaces, following the user's Discourse language.
 
-The first version focuses on reading. It does not post replies, execute arbitrary JavaScript, browse other sites, install skills, or automate navigation. Chat content stays in application memory while navigating the forum; refreshing starts a new chat. Audit logs are for administrator troubleshooting, not a member-facing history service.
+The first version focuses on reading. It does not post replies, execute arbitrary JavaScript, browse other sites, install skills, or automate navigation. Chat stays open while navigating the forum. Closing and reopening the panel or refreshing starts a new chat. Earlier chats, images, and model context can be restored from local history on that browser. History is isolated by forum origin, base path, and signed-in account; it does not sync across devices. Audit logs remain a separate administrator troubleshooting service.
 
 ![xGoose answering a question in a synthetic development forum](docs/screenshots/desktop.png)
 
@@ -43,24 +46,26 @@ In **Admin → Settings**, search for `xgoose`:
 
 1. Set `xgoose_api_base_url` to the provider's **HTTPS** API base, such as `https://your-provider.example/v1`. The plugin appends `/chat/completions`.
 2. Set the secret `xgoose_api_key` and `xgoose_model`.
-3. Choose context, output, daily allowance, rate, concurrency, and log retention limits.
+3. Choose context, output, daily USD budget, request rate, concurrency, and log retention limits. Set the input, output, cache-read and cache-write USD prices per million tokens to match the configured provider.
 4. Enable `xgoose_enabled` and reload the forum.
 
 For **GPT-6 Luna**, use `gpt-6-luna`, enable `xgoose_use_max_completion_tokens`, and enable `xgoose_disable_reasoning`. Luna requires `reasoning_effort: none` for function calls through Chat Completions. These options leave the browser Agent and the provider interface unchanged.
 
-The model must support streaming **OpenAI Chat Completions**, text messages, and function tool calls. The upstream should return streaming usage with `stream_options.include_usage`; providers that omit usage are charged conservatively. Responses API, image input, non-streaming mode, and per-member API keys are outside this version's interface.
+The model must support streaming **OpenAI Chat Completions**, text/image messages, and function tool calls. The upstream should return streaming usage with `stream_options.include_usage`; providers that omit usage are charged conservatively. Responses API, non-streaming mode, and per-member API keys are outside this version's interface.
 
-Defaults are 100,000 input + output tokens per user per UTC day, 2,048 output tokens per call, 20 model requests per user per minute, one concurrent call per user, eight concurrent calls across the site, eight model calls per question, a 120-second timeout, and 30 days of audit retention. Each limit is a site setting except the fixed one-call-per-user concurrency limit.
+Defaults are **$2 per user per UTC day**, 2,048 output tokens per call, 20 model requests per user per minute, one concurrent call per user, eight concurrent calls across the site, eight model calls per question, a 120-second timeout, and 30 days of audit retention. Each limit is a site setting except the fixed one-call-per-user concurrency limit.
 
-The context setting uses a conservative UTF-8 byte estimate plus message overhead and output allowance. Long conversations can reach this safety estimate before the provider's real tokenizer limit. Start a new chat when this happens. Completed calls use upstream input + output usage when available; interrupted calls or missing usage retain the conservative reservation. Repeated retries are never free. Administrators have the same limits as other users.
+The context setting uses a conservative UTF-8 byte estimate plus message overhead and output allowance. Long conversations can reach this safety estimate before the provider's real tokenizer limit. At 55% of the configured context estimate, the Pi request hook generates a compact summary, preserving questions, source URLs, image observations, and outstanding research. The full chat remains in local history. Summary calls use the same server budget and per-question call limit. Extremely large single messages can still require a shorter question. Completed calls use upstream input/output usage and reported cache hits with the price snapshot recorded at reservation; interrupted calls or missing usage retain the conservative dollar reservation. Money is stored as integer micro-USD, rounded up once per call. Displayed cost is the plugin estimate under administrator-configured rates, not an invoice from the provider. Repeated retries are never free. Administrators have the same limits as other users.
 
 ## Audit logs and privacy
 
-Administrators can open **`/admin/plugins/xgoose`** to filter by user, time, and status, inspect request/response snapshots and tool events, export JSON or plain-text transcripts, and delete completed logs. Moderators and regular members cannot read these logs. Scheduled cleanup removes sessions after the configured retention period, including their requests and events.
+Administrators can open **`/admin/plugins/xgoose/logs`** to filter by user, time, and status, inspect request/response snapshots and tool events, export JSON or plain-text transcripts, and delete completed logs. Moderators and regular members cannot read these logs. Scheduled cleanup removes sessions after the configured retention period, including their requests and events.
 
 A request snapshot includes prior model context, so exports deliberately label snapshots rather than presenting repeated context as new messages. Client tool events are untrusted diagnostics. Missing sequence numbers, missing tool results, absent turn-end events, or interrupted requests mark a transcript incomplete. The server's own request and usage records drive accounting.
 
-Content read for an answer is sent to your configured model provider and can appear in administrator logs. This includes restricted posts and private messages when enabled. The panel explains this behavior. Review your provider and forum settings before enabling the feature for a community. API keys, cookies, and authorization headers are excluded from audit records; chat bodies are filtered from normal Rails parameter logs. Existing database backups can retain older audit data according to your backup policy.
+Content read for an answer and attached images are sent to your configured model provider. Text can appear in administrator logs; image pixels are replaced by SHA-256 and encoded-size metadata in audit snapshots. Image observations in model responses remain in the transcript. Images and full chat content stay in local browser history until the member deletes them or clears site storage. A shared browser profile shares access to its local storage; account scoping is an application boundary, not encryption. The history panel supports individual chat deletion. Refreshing does not erase history.
+
+Content can include restricted posts and opted-in private messages. The panel explains this behavior. Review your provider and forum settings before enabling the feature for a community. API keys, cookies, and authorization headers are excluded from audit records; chat bodies are filtered from normal Rails parameter logs. Existing database backups can retain older audit data according to your backup policy.
 
 ## Architecture
 

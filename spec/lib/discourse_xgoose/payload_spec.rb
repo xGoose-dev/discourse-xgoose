@@ -43,3 +43,37 @@ RSpec.describe DiscourseXgoose::Payload do
     expect(body).not_to have_key(:max_tokens)
   end
 end
+RSpec.describe DiscourseXgoose::Payload, "images" do
+  let(:image) do
+    "data:image/png;base64," + Base64.strict_encode64("\x89PNG\r\n\x1a\n".b + "fixture")
+  end
+  def raw_image(value)
+    {
+      "messages" => [
+        {
+          "role" => "user",
+          "content" => [
+            { "type" => "text", "text" => "Read this" },
+            { "type" => "image_url", "image_url" => { "url" => value } },
+          ],
+        },
+      ],
+    }
+  end
+  it "forwards validated inline images but only retains hashes and metadata in audit snapshots" do
+    body, bound = described_class.build(raw_image(image))
+    expect(body[:messages].last[:content].last.dig(:image_url, :url)).to eq(image)
+    audit = described_class.audit_messages(body[:messages])
+    expect(JSON.generate(audit)).not_to include(image)
+    expect(JSON.generate(audit)).to include("sha256=", "encoded_bytes=", "Read this")
+    expect(bound).to be > 8192
+  end
+  it "rejects external images and forged image bytes" do
+    %w[https://example.com/image.png data:image/png;base64,aGVsbG8=].each do |value|
+      expect { described_class.build(raw_image(value)) }.to raise_error(
+        DiscourseXgoose::Error,
+        "invalid_image",
+      )
+    end
+  end
+end

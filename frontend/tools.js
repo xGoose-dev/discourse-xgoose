@@ -146,7 +146,7 @@ export function createForumTools({
   return [
     tool(
       "search_forum",
-      "Search public and permitted restricted forum topics, excluding private messages. Read actual posts next.",
+      "Search public and permitted restricted forum topics, excluding private messages. Use short keyword queries: terms are AND-matched, not semantic search. If empty, retry fewer terms or latest_topics. Read actual posts next.",
       searchSchema,
       (a, s) => search(a, false, s),
     ),

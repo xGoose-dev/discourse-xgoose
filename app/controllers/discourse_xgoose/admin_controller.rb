@@ -17,7 +17,10 @@ module DiscourseXgoose
         :before
       ].present?
       @sessions =
-        @sessions.limit(50).offset(params[:page].to_i.clamp(0, 10_000) * 50).includes(:user)
+        @sessions
+          .limit(50)
+          .offset(params[:page].to_i.clamp(0, 10_000) * 50)
+          .includes(:user, :requests)
       render layout: false
     rescue ArgumentError
       raise Discourse::InvalidParameters.new(:after)
@@ -48,6 +51,10 @@ module DiscourseXgoose
                          response_message
                          reserved_tokens
                          charged_tokens
+                         charged_microusd
+                         reserved_microusd
+                         pricing_rates
+                         provider_usage
                          estimated
                          duration_ms
                          error_code
@@ -66,7 +73,7 @@ module DiscourseXgoose
             I18n.t("xgoose.admin.client_note"),
           ]
           @requests.each do |r|
-            lines << "\nREQUEST #{r.request_id} (#{r.status}; #{r.charged_tokens} tokens; estimated=#{r.estimated})"
+            lines << "\nREQUEST #{r.request_id} (#{r.status}; #{r.charged_tokens} tokens; USD=#{r.charged_microusd / 1_000_000.0}; estimated=#{r.estimated})"
             lines << "Input snapshot (includes context from earlier requests):"
             r.messages.each { |m| lines << "#{m["role"]}: #{JSON.generate(m.except("role"))}" }
             lines << "assistant: #{JSON.generate(r.response_message)}"

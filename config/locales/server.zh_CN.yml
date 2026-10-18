@@ -1,26 +1,28 @@
----
 zh_CN:
   site_settings:
-    xgoose_enabled: 启用 xGoose 论坛助手。审计日志：/admin/plugins/xgoose。
+    xgoose_enabled: 启用 xGoose 论坛助手。审计日志：/admin/plugins/xgoose/logs。
     xgoose_api_base_url: OpenAI 兼容 API 的 HTTPS 基础地址，需要时包含 /v1。
     xgoose_api_key: 仅服务端保存的上游 API 密钥，不发送到浏览器。
     xgoose_model: 模型 ID，必须支持流式 Chat Completions 和工具调用。
     xgoose_context_tokens: 请求上下文上限：以 UTF-8 字节数保守估计，包含输出预算。
-    xgoose_daily_tokens: 每人每天输入与输出 token 总额度，管理员同样受限，UTC 零点重置。
     xgoose_max_output_tokens: 每次模型调用的输出 token 上限。
     xgoose_requests_per_minute: 每个用户每分钟的模型调用上限。
     xgoose_site_concurrency: 全站并发模型调用上限，每个用户最多一个。
     xgoose_max_turn_calls: 每次用户提问允许的模型调用次数上限。
     xgoose_timeout_seconds: 上游模型调用的总超时时间，单位为秒。
     xgoose_log_retention_days: 管理员私有审计日志保留天数，可能包含私信和受限帖子。
-    xgoose_use_max_completion_tokens: 使用 max_completion_tokens 替代 max_tokens（较新的 OpenAI
-      模型需要）。
+    xgoose_use_max_completion_tokens: 使用 max_completion_tokens 替代 max_tokens（较新的 OpenAI 模型需要）。
     xgoose_disable_reasoning: 发送 reasoning_effort=none（Luna 通过 Chat Completions 调用工具时需要）。
+    xgoose_daily_budget_usd: 每位用户的每日美元预算，管理员也受限。默认 $2，UTC 零点重置。
+    xgoose_input_usd_per_million: 每百万未缓存输入 token 的美元价格，须与模型服务一致。
+    xgoose_output_usd_per_million: 每百万输出 token 的美元价格。
+    xgoose_cached_usd_per_million: 每百万缓存读取输入 token 的美元价格。
+    xgoose_cache_write_usd_per_million: 每百万缓存写入输入 token 的美元价格。
   xgoose:
     errors:
       generic: 请求失败。请开启新会话或联系站点管理员。
       not_configured: 站点管理员尚未完成 AI 服务配置。
-      quota_exceeded: 今日剩余额度不足以处理本次请求，请等待重置或开始更短的新会话。
+      quota_exceeded: 每日美元预算已用完或不足以预留本次请求。请等待重置，或开启更短的对话。
       context_limit: 当前会话过长，请开启新会话。
       turn_limit: 本次检索已达到步骤上限，请缩小问题范围后继续。
       busy: 已有请求正在执行，或站点繁忙，请稍后重试。
@@ -49,3 +51,4 @@ zh_CN:
       delete: 删除日志
       confirm_delete: 删除此会话及全部审计内容？此操作不可撤销。
       delete_failed: 无法删除日志，可能仍有请求正在执行。
+      cost: 费用（美元）

@@ -20,7 +20,9 @@ const server = https.createServer(
       .filter((m) => m.role === "tool");
     if (
       !results.length &&
-      String(body.messages[lastUser]?.content).includes("xgoose-delay-test")
+      JSON.stringify(body.messages[lastUser]?.content).includes(
+        "xgoose-delay-test",
+      )
     ) {
       await new Promise((resolve) => setTimeout(resolve, 65000));
     }

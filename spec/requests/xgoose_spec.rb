@@ -115,7 +115,7 @@ RSpec.describe "xGoose endpoints" do
   end
   it "serves the administrator log index ahead of the admin SPA catch-all" do
     sign_in(admin)
-    get "/admin/plugins/xgoose"
+    get "/admin/plugins/xgoose/logs"
     expect(response.status).to eq(200)
     expect(response.body).to include("<h1>xGoose audit logs</h1>")
   end

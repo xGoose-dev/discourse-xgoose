@@ -5,9 +5,10 @@ DiscourseXgoose::Engine.routes.draw do
   post "/sessions/:id/chat/completions" => "sessions#completion"
   post "/sessions/:id/events" => "sessions#events"
 end
-Discourse::Application.routes.prepend do
+Discourse::Application.routes.draw do
   mount ::DiscourseXgoose::Engine, at: "/xgoose"
-  get "/admin/plugins/xgoose" => "discourse_xgoose/admin#index", :constraints => AdminConstraint.new
+  get "/admin/plugins/xgoose/logs" => "discourse_xgoose/admin#index",
+      :constraints => AdminConstraint.new
   get "/admin/plugins/xgoose/:id" => "discourse_xgoose/admin#show",
       :constraints => AdminConstraint.new
   delete "/admin/plugins/xgoose/:id" => "discourse_xgoose/admin#destroy",

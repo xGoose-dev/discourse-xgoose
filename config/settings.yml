@@ -17,9 +17,22 @@ plugins:
     default: 32768
     min: 4096
     max: 262144
-  xgoose_daily_tokens:
-    default: 100000
-    min: 1
+  xgoose_daily_budget_usd:
+    default: 2.0
+    min: 0.001
+    max: 1000.0
+  xgoose_input_usd_per_million:
+    default: 0.10
+    min: 0.0
+  xgoose_output_usd_per_million:
+    default: 0.50
+    min: 0.0
+  xgoose_cached_usd_per_million:
+    default: 0.01
+    min: 0.0
+  xgoose_cache_write_usd_per_million:
+    default: 0.125
+    min: 0.0
   xgoose_max_output_tokens:
     default: 2048
     min: 128

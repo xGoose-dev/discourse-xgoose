@@ -22,7 +22,12 @@ module DiscourseXgoose
                max_output_tokens: SiteSetting.xgoose_max_output_tokens,
                max_turn_calls: SiteSetting.xgoose_max_turn_calls,
                system_prompt: Payload::SYSTEM,
+               pricing: Pricing.rates,
                quota: Quota.snapshot(current_user),
+               session_cost_usd:
+                 Request.where(user_id: current_user.id, session_id: params[:session_id].to_i).sum(
+                   :charged_microusd,
+                 ) / 1_000_000.0,
              }
     end
     def create
@@ -32,7 +37,7 @@ module DiscourseXgoose
     def completion
       raise Error.new("not_configured", 503) unless Gateway.configured?
       Gateway.endpoint
-      raise Error.new("request_too_large", 413) if request.raw_post.bytesize > 262_144
+      raise Error.new("request_too_large", 413) if request.raw_post.bytesize > 6_291_456
       request_id = request.headers["X-Xgoose-Request-Id"]
       turn_id = request.headers["X-Xgoose-Turn-Id"]
       unless Payload::UUID.match?(request_id.to_s) && Payload::UUID.match?(turn_id.to_s)
@@ -79,7 +84,7 @@ module DiscourseXgoose
           unless Payload::UUID.match?(value["event_id"].to_s) &&
                    Payload::UUID.match?(value["turn_id"].to_s) &&
                    value["sequence"].is_a?(Integer) && value["sequence"] >= 0 &&
-                   %w[tool_start tool_end turn_end aborted].include?(value["kind"]) &&
+                   %w[tool_start tool_end turn_end aborted compaction].include?(value["kind"]) &&
                    value["payload"].is_a?(Hash)
             raise Error.new("invalid_events")
           end

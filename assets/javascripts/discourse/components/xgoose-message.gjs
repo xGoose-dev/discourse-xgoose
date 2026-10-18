@@ -11,6 +11,15 @@ import { on } from "@ember/modifier";
 import DiscourseURL from "discourse/lib/url";
 export default class XgooseMessage extends Component {
   @tracked cooked = null;
+  @tracked copied = false;
+  @action async copy() {
+    try {
+      await navigator.clipboard.writeText(this.args.message.content);
+      this.copied = true;
+    } catch {
+      this.copied = false;
+    }
+  }
   revision = 0;
   @action navigate(event) {
     const anchor = event.target.closest("a");
@@ -48,7 +57,23 @@ export default class XgooseMessage extends Component {
           (i18n "xgoose.you")
           "xGoose"
         }}</strong>
+      {{#if @message.images.length}}<div class="xgoose-message-images">{{#each
+            @message.images
+            as |image|
+          }}<img
+              src={{image.dataUrl}}
+              alt={{i18n "xgoose.attached_image"}}
+            />{{/each}}</div>{{/if}}
       <div class="cooked" {{on "click" this.navigate}}>{{this.cooked}}</div>
+      {{#if (eq @message.role "assistant")}}<button
+          type="button"
+          class="xgoose-copy"
+          {{on "click" this.copy}}
+        >{{if
+            this.copied
+            (i18n "xgoose.copied")
+            (i18n "xgoose.copy")
+          }}</button>{{/if}}
     </article>
   </template>
 }

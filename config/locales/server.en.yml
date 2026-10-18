@@ -1,37 +1,36 @@
----
 en:
   site_settings:
-    xgoose_enabled: 'Enable the xGoose forum research assistant. Audit logs: /admin/plugins/xgoose.'
-    xgoose_api_base_url: HTTPS OpenAI-compatible API base URL, including /v1 when
-      required.
+    xgoose_enabled: 'Enable the xGoose forum research assistant. Audit logs: /admin/plugins/xgoose/logs.'
+    xgoose_api_base_url: HTTPS OpenAI-compatible API base URL, including /v1 when required.
     xgoose_api_key: Server-only upstream API key. Never sent to browsers.
     xgoose_model: Model ID. Must support streaming Chat Completions and tool calls.
-    xgoose_context_tokens: Maximum request context, conservatively estimated from
-      UTF-8 bytes including output allowance.
-    xgoose_daily_tokens: Daily input + output token allowance per user, including
-      administrators. Resets at 00:00 UTC.
+    xgoose_context_tokens: Maximum request context, conservatively estimated from UTF-8 bytes including
+      output allowance.
     xgoose_max_output_tokens: Maximum output tokens per model call.
     xgoose_requests_per_minute: Model calls per user per minute.
-    xgoose_site_concurrency: Maximum concurrent model calls across the site. Each
-      user is limited to one.
+    xgoose_site_concurrency: Maximum concurrent model calls across the site. Each user is limited to one.
     xgoose_max_turn_calls: Maximum model calls per user question.
     xgoose_timeout_seconds: Total timeout for an upstream model call, in seconds.
-    xgoose_log_retention_days: Days to retain private administrator audit logs. May
-      include private messages and restricted posts.
-    xgoose_use_max_completion_tokens: Use max_completion_tokens instead of max_tokens
-      (required by newer OpenAI models).
-    xgoose_disable_reasoning: Send reasoning_effort=none (required for Luna tool calls
-      over Chat Completions).
+    xgoose_log_retention_days: Days to retain private administrator audit logs. May include private messages
+      and restricted posts.
+    xgoose_use_max_completion_tokens: Use max_completion_tokens instead of max_tokens (required by newer
+      OpenAI models).
+    xgoose_disable_reasoning: Send reasoning_effort=none (required for Luna tool calls over Chat Completions).
+    xgoose_daily_budget_usd: Daily USD budget per user, including administrators. Default $2, resets at
+      00:00 UTC.
+    xgoose_input_usd_per_million: USD per million uncached input tokens. Match your provider pricing.
+    xgoose_output_usd_per_million: USD per million output tokens.
+    xgoose_cached_usd_per_million: USD per million cache-read input tokens.
+    xgoose_cache_write_usd_per_million: USD per million cache-write input tokens.
   xgoose:
     errors:
       generic: The request failed. Try a new chat or contact a site administrator.
       not_configured: The site administrator needs to configure the AI provider.
-      quota_exceeded: Your daily token allowance is used up or too small for this
-        request. Wait for the reset or start a shorter chat.
+      quota_exceeded: Your daily dollar budget is used up or too small to reserve this request. Wait for
+        the reset or start a shorter chat.
       context_limit: This conversation is too long. Start a new chat.
       turn_limit: This research reached its step limit. Ask a narrower follow-up question.
-      busy: A request is already running, or the site is busy. Wait a moment and try
-        again.
+      busy: A request is already running, or the site is busy. Wait a moment and try again.
       rate_limited: Too many requests. Wait before trying again.
       upstream_error: The AI provider could not complete the request. Try again later.
       upstream_timeout: The AI provider timed out. Try a smaller question.
@@ -47,9 +46,9 @@ en:
       after: From
       before: Through
       next: Next page
-      client_note: Input snapshots include earlier context. Tool events are client-reported,
-        not proof of execution or authoritative billing. Missing terminal events or
-        interrupted requests mean the transcript is incomplete.
+      client_note: Input snapshots include earlier context. Tool events are client-reported, not proof
+        of execution or authoritative billing. Missing terminal events or interrupted requests mean the
+        transcript is incomplete.
       complete: Transcript complete
       incomplete: Transcript incomplete or still running
       export: Export transcript
@@ -57,6 +56,6 @@ en:
       output: Model response
       client_events: Client-reported tool events
       delete: Delete this log
-      confirm_delete: Delete this session and all its audit content? This cannot be
-        undone.
+      confirm_delete: Delete this session and all its audit content? This cannot be undone.
       delete_failed: Could not delete this log. A request may still be running.
+      cost: Cost (USD)

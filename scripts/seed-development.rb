@@ -7,7 +7,7 @@ SiteSetting.xgoose_enabled = true
 SiteSetting.xgoose_api_base_url = "https://localhost:9443/v1"
 SiteSetting.xgoose_api_key = "local-mock-only"
 SiteSetting.xgoose_model = "xgoose-mock"
-SiteSetting.xgoose_daily_tokens = 1_000_000
+SiteSetting.xgoose_daily_budget_usd = 2.0
 SiteSetting.allow_user_locale = true
 SiteSetting.disable_emails = "non-staff"
 SiteSetting.min_first_post_typing_time = 0
@@ -24,6 +24,17 @@ user =
       admin: true,
     )
 user.activate
+if ENV["XGOOSE_TEST_MEMBER_PASSWORD"].present?
+  User.find_by(username: "xgoose_member") ||
+    User.create!(
+      username: "xgoose_member",
+      email: "xgoose-member@example.invalid",
+      password: ENV.fetch("XGOOSE_TEST_MEMBER_PASSWORD"),
+      active: true,
+      approved: true,
+      trust_level: 1,
+    )
+end
 unless Topic.exists?(title: "Building a helpful community knowledge base")
   post =
     PostCreator.create!(

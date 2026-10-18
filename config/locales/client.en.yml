@@ -1,4 +1,3 @@
----
 en:
   js:
     xgoose:
@@ -8,12 +7,11 @@ en:
       close: Close panel
       new_chat: New chat
       you: You
-      remaining: "%{count} tokens remaining"
+      remaining: '%{count} remaining'
       resets: Resets %{time}
       conversation: Conversation
       welcome: Find answers in your community
-      welcome_hint: Ask a question. xGoose reads the relevant posts and links to its
-        sources.
+      welcome_hint: Ask a question. xGoose reads the relevant posts and links to its sources.
       summarize: Summarize this topic
       related: Find related discussions
       recent: Explore recent discussions
@@ -25,29 +23,30 @@ en:
       placeholder: Ask about your forum…
       send: Send
       stop: Stop
-      privacy: Read content is sent to the site’s AI provider and retained in administrator
-        logs for the configured period. This can include restricted topics and enabled
-        private messages.
+      privacy: Your chats and images are saved in this browser until you delete them. Forum content and
+        attached images are sent to the site AI provider. Administrators can access diagnostic transcripts;
+        images are represented by metadata, not stored pixels. Restricted posts and opted-in private messages
+        may be included.
       login_required: Log in to the forum to use xGoose.
       include_private: Include my private messages
-      log_warning: Some tool logs could not be saved. The administrator transcript
-        may be incomplete.
+      log_warning: Some tool logs could not be saved. The administrator transcript may be incomplete.
       errors:
         generic: The request failed. Try a new chat or contact a site administrator.
         not_configured: The site administrator needs to configure the AI provider.
-        quota_exceeded: Your daily token allowance is used up or too small for this
-          request. Wait for the reset or start a shorter chat.
+        quota_exceeded: Your daily dollar budget is used up or too small to reserve this request. Wait
+          for the reset or start a shorter chat.
         context_limit: This conversation is too long. Start a new chat.
-        turn_limit: This research reached its step limit. Ask a narrower follow-up
-          question.
-        busy: A request is already running, or the site is busy. Wait a moment and
-          try again.
+        turn_limit: This research reached its step limit. Ask a narrower follow-up question.
+        busy: A request is already running, or the site is busy. Wait a moment and try again.
         rate_limited: Too many requests. Wait before trying again.
-        upstream_error: The AI provider could not complete the request. Try again
-          later.
+        upstream_error: The AI provider could not complete the request. Try again later.
         upstream_timeout: The AI provider timed out. Try a smaller question.
         upstream_incomplete: The connection ended before the answer was complete.
         request_too_large: The request is too large. Start a shorter chat.
+        invalid_image: Use a valid PNG, JPEG, or WebP image.
+        image_limit: Attach up to two images per message.
+        image_too_large: Use an image under 10 MB and 40 megapixels.
+        compaction_failed: The context summary failed. Try again or start a new chat.
       tools:
         search_forum: Search forum
         search_private_messages: Search private messages
@@ -58,7 +57,37 @@ en:
         current_topic: Read current topic
       prompts:
         summarize: Read and summarize the current topic. Cite the posts you use.
-        related: Read the current topic, then search for related discussions and explain
-          the connections with citations.
-        recent: Show recent discussions in this forum and read the most relevant ones
-          before summarizing.
+        related: Read the current topic, then search for related discussions and explain the connections
+          with citations.
+        recent: Show recent discussions in this forum and read the most relevant ones before summarizing.
+      forum: forum
+      history: Chat history
+      history_hint: Saved on this device, for your account. Images stay with the conversation. Restore
+        a chat to continue it.
+      history_empty: Your saved conversations will appear here.
+      history_saved: Saved on this device · click to continue
+      delete_chat: Delete local chat
+      expand: Expand panel
+      budget: Daily budget
+      daily_reset: Resets at midnight UTC
+      eyebrow: Your community, connected
+      fresh_hint: Every opening starts fresh. Earlier chats are in your history.
+      attach: Attach images
+      image: Image
+      remove_image: Remove image
+      attached_image: Attached image
+      copy: Copy answer
+      copied: Copied
+      thinking: Searching, reading, connecting…
+      compacting: Summarizing earlier context…
+      chat_cost: This chat %{cost}
+      context: Context %{percent}%
+      summaries:
+        one: '%{count} summary'
+        other: '%{count} summaries'
+      summary: Earlier context summary
+      auto_summary: Earlier context is automatically summarized as the conversation grows. The full chat
+        stays in local history.
+      privacy_label: Sent to site AI · administrator logs
+      storage_warning: Local history could not be saved. Check browser storage before closing this chat.
+      image_prompt: Describe this image and search the forum for relevant discussions.

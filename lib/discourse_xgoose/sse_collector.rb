@@ -4,7 +4,7 @@ module DiscourseXgoose
   # Parses SSE independently of TCP chunk boundaries; stores a bounded partial
   # answer even when the browser disconnects or the upstream never sends DONE.
   class SseCollector
-    attr_reader :message, :tokens, :done, :finish_reason
+    attr_reader :message, :tokens, :done, :finish_reason, :usage
     def initialize
       @buffer = +""
       @event = []
@@ -44,6 +44,7 @@ module DiscourseXgoose
            usage["completion_tokens"].is_a?(Integer) && usage["prompt_tokens"] >= 0 &&
            usage["completion_tokens"] >= 0
         @tokens = usage["prompt_tokens"] + usage["completion_tokens"]
+        @usage = usage
       end
       choice = event.fetch("choices", [])[0]
       return unless choice
