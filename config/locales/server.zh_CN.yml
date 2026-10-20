@@ -1,3 +1,4 @@
+---
 zh_CN:
   site_settings:
     xgoose_enabled: 启用 xGoose 论坛助手。审计日志：/admin/plugins/xgoose/logs。
@@ -10,8 +11,9 @@ zh_CN:
     xgoose_site_concurrency: 全站并发模型调用上限，每个用户最多一个。
     xgoose_max_turn_calls: 每次用户提问允许的模型调用次数上限。
     xgoose_timeout_seconds: 上游模型调用的总超时时间，单位为秒。
-    xgoose_log_retention_days: 管理员私有审计日志保留天数，可能包含私信和受限帖子。
-    xgoose_use_max_completion_tokens: 使用 max_completion_tokens 替代 max_tokens（较新的 OpenAI 模型需要）。
+    xgoose_log_retention_days: 对话正文、请求指标、用量、拒绝请求与额度变更历史的保留天数，默认 90 天。当前个人每日上限配置持续保留。
+    xgoose_use_max_completion_tokens: 使用 max_completion_tokens 替代 max_tokens（较新的 OpenAI
+      模型需要）。
     xgoose_disable_reasoning: 发送 reasoning_effort=none（Luna 通过 Chat Completions 调用工具时需要）。
     xgoose_daily_budget_usd: 每位用户的每日美元预算，管理员也受限。默认 $2，UTC 零点重置。
     xgoose_input_usd_per_million: 每百万未缓存输入 token 的美元价格，须与模型服务一致。

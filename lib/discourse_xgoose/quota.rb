@@ -5,10 +5,13 @@ module DiscourseXgoose
       row = Usage.find_by(user_id: user.id, day: Time.now.utc.to_date)
       used, reserved = row&.used_microusd.to_i, row&.reserved_microusd.to_i
       {
-        limit_usd: Pricing.limit / 1_000_000.0,
+        limit_usd: limit_for(user, row) / 1_000_000.0,
+        base_limit_usd: base_limit(user) / 1_000_000.0,
+        bonus_usd: row&.bonus_microusd.to_i / 1_000_000.0,
+        personal_limit_usd: Budget.find_by(user_id: user.id)&.daily_microusd&./(1_000_000.0),
         used_usd: used / 1_000_000.0,
         reserved_usd: reserved / 1_000_000.0,
-        remaining_usd: [Pricing.limit - used - reserved, 0].max / 1_000_000.0,
+        remaining_usd: [limit_for(user, row) - used - reserved, 0].max / 1_000_000.0,
         used: row&.used.to_i,
         reserved: row&.reserved.to_i,
         resets_at: (Time.now.utc.to_date + 1).to_time(:utc).iso8601,
@@ -18,15 +21,16 @@ module DiscourseXgoose
       day = Time.now.utc.to_date
       rates = Pricing.rates
       dollars = Pricing.reserve(amount, rates)
-      Usage.insert_all(
-        [{ user_id: user.id, day: day, used: 0, reserved: 0 }],
-        unique_by: %i[user_id day],
-      )
+      budget = Budget.ensure_for!(user)
       Usage.transaction do
-        usage = Usage.lock.find_by!(user_id: user.id, day: day)
-        if usage.used_microusd + usage.reserved_microusd + dollars > Pricing.limit
+        budget.lock!
+        usage = ensure_usage!(user, day)
+        usage.lock!
+        if usage.used_microusd + usage.reserved_microusd + dollars >
+             (budget.daily_microusd || Pricing.limit) + usage.bonus_microusd
           raise Error.new("quota_exceeded", 429)
         end
+        session.lock!
         if session.requests.where(turn_id: turn_id).count >= SiteSetting.xgoose_max_turn_calls
           raise Error.new("turn_limit", 429)
         end
@@ -36,6 +40,7 @@ module DiscourseXgoose
             request_id: request_id,
             turn_id: turn_id,
             model: body[:model],
+            purpose: body.delete(:xgoose_purpose) || "unknown",
             messages: Payload.audit_messages(body[:messages]),
             reserved_tokens: amount,
             reserved_microusd: dollars,
@@ -47,6 +52,9 @@ module DiscourseXgoose
           reserved: usage.reserved + amount,
           reserved_microusd: usage.reserved_microusd + dollars,
         )
+        Metric.capture!(request)
+        session.touch
+        session.update!(complete: false, integrity_reasons: ["request_in_progress"])
         request
       end
     rescue ActiveRecord::RecordNotUnique
@@ -59,7 +67,9 @@ module DiscourseXgoose
       response: {},
       status: "completed",
       error: nil,
-      duration: nil
+      duration: nil,
+      first_token_ms: nil,
+      upstream_status: nil
     )
       Usage.transaction do
         ledger = Usage.lock.find_by!(user_id: request.user_id, day: request.usage_date)
@@ -98,8 +108,26 @@ module DiscourseXgoose
           status: status,
           error_code: error,
           duration_ms: duration,
+          first_token_ms: first_token_ms,
+          upstream_status: upstream_status,
         )
+        Metric.capture!(request)
+        Transcript.refresh!(request.session)
       end
+    end
+    def self.ensure_usage!(user, day)
+      Usage.insert_all(
+        [{ user_id: user.id, day: day, used: 0, reserved: 0 }],
+        unique_by: %i[user_id day],
+      )
+      Usage.find_by!(user_id: user.id, day: day)
+    end
+    def self.base_limit(user)
+      Budget.find_by(user_id: user.id)&.daily_microusd || Pricing.limit
+    end
+    def self.limit_for(user, usage = nil)
+      usage ||= Usage.find_by(user_id: user.id, day: Time.now.utc.to_date)
+      base_limit(user) + usage&.bonus_microusd.to_i
     end
     def self.reap!
       Request

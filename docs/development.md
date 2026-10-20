@@ -52,3 +52,20 @@ XGOOSE_REAL_API=1 XGOOSE_TEST_PASSWORD=your-local-fixture-password XGOOSE_TEST_M
 Never put a real key in this command, fixture files, screenshots, or committed configuration. Live tests expect the isolated Luna fixture and a $2 daily budget.
 
 Set `XGOOSE_TEST_MEMBER_PASSWORD` when seeding to create the optional regular-member fixture. Supplying it to the live test also verifies history isolation after switching accounts.
+
+
+## Native administration and monitoring
+
+Admin UI modules live in `admin/assets/javascripts/discourse/` and use Discourse’s own chart component. JSON reports and budget mutations are under `/admin/plugins/discourse-xgoose/`; HTML routes use the native plugin shell. Legacy audit URLs remain supported.
+
+`xgoose_metrics` contains one bounded, content-free metadata row per reserved model request, updated atomically at settlement and retained independently of transcripts. Rejections have a separate table and never count as model calls. PostgreSQL calculates aggregates and latency percentiles; list endpoints do not load request bodies. `xgoose_usage` is the authoritative daily money ledger. Budget mutations and reservations lock the persistent per-user budget row before the daily ledger; settlement only locks the ledger, request, then session. Admin deletion and retention recheck active requests under the session lock. Client events are never a money source.
+
+The cleanup job runs every five minutes, reaps expired reservations, clears content and metrics after the configured retention, and stores its last-success timestamp. Legacy integrity checks are refreshed in batches. Retained metrics have no cascading foreign key to a transcript.
+
+Run the admin browser suite with the existing synthetic local fixture:
+
+```sh
+XGOOSE_TEST_PASSWORD=... XGOOSE_TEST_MEMBER_PASSWORD=... npx playwright test tests/admin-browser.spec.mjs
+```
+
+The paid `tests/monitoring-live-browser.spec.mjs` additionally requires `XGOOSE_REAL_API=1`. It exercises zero-budget rejection, an administrator’s temporary grant, a real Luna answer, and consistent report/ledger/transcript values, then restores the original budget policy. Use the fixture accounts only. Finish provider-switch tests by restoring the live model configuration.

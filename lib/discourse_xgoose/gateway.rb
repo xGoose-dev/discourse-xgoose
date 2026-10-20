@@ -21,6 +21,8 @@ module DiscourseXgoose
     def self.stream(request, body)
       collector = SseCollector.new
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      first_token_ms = nil
+      upstream_status = nil
       status = "failed"
       error = "upstream_error"
       begin
@@ -37,15 +39,24 @@ module DiscourseXgoose
         Timeout.timeout(SiteSetting.xgoose_timeout_seconds) do
           http.start do |connection|
             connection.request(upstream) do |response|
+              upstream_status = response.code.to_i
               raise Error.new("upstream_http_#{response.code}", 502) unless response.code == "200"
               response.read_body do |chunk|
                 collector.feed(chunk)
+                first_token_ms ||=
+                  (
+                    (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000
+                  ).round if collector.meaningful_output
                 yield chunk
               end
             end
           end
         end
         collector.finish
+        first_token_ms ||=
+          (
+            (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000
+          ).round if collector.meaningful_output
         raise Error.new("upstream_incomplete", 502) unless collector.done && collector.finish_reason
         status = "completed"
         error = nil
@@ -73,6 +84,8 @@ module DiscourseXgoose
           response: collector.message.merge("finish_reason" => collector.finish_reason),
           status: status,
           error: error,
+          first_token_ms: first_token_ms,
+          upstream_status: upstream_status,
           duration: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round,
         )
       end

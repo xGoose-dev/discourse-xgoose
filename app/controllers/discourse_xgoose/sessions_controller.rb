@@ -6,12 +6,22 @@ module DiscourseXgoose
     before_action :check_access
     before_action :load_session, only: %i[completion events]
     rescue_from DiscourseXgoose::Error do |error|
+      record_rejection(error.code)
       render json: {
                error: error.code,
                message:
                  I18n.t("xgoose.errors.#{error.code}", default: I18n.t("xgoose.errors.generic")),
              },
              status: error.status
+    end
+
+    rescue_from RateLimiter::LimitExceeded do |_error|
+      record_rejection("rate_limited")
+      render json: {
+               error: "rate_limited",
+               message: I18n.t("xgoose.errors.rate_limited"),
+             },
+             status: 429
     end
 
     def configuration
@@ -44,6 +54,9 @@ module DiscourseXgoose
         raise Error.new("invalid_id")
       end
       body, amount = Payload.build(params.to_unsafe_h)
+      purpose = request.headers["X-Xgoose-Purpose"].to_s
+      raise Error.new("invalid_purpose") unless ["", "generation", "summary"].include?(purpose)
+      body[:xgoose_purpose] = purpose.presence || "unknown"
       RateLimiter.new(
         current_user,
         "xgoose-model",
@@ -98,12 +111,29 @@ module DiscourseXgoose
             created_at: Time.now.utc,
           }
         end
-      Event.insert_all(rows, unique_by: %i[session_id event_id])
+      @session.with_lock do
+        Event.insert_all(rows, unique_by: %i[session_id event_id])
+        Transcript.refresh!(@session)
+      end
       render json: { ok: true }
     end
 
     private
 
+    def record_rejection(code)
+      unless action_name == "completion" && current_user && @session &&
+               @session.user_id == current_user.id
+        return
+      end
+      return if @session.requests.exists?(request_id: request.headers["X-Xgoose-Request-Id"].to_s)
+      Rejection.create!(
+        user_id: current_user.id,
+        session_id: @session.id,
+        reason: code,
+        model: SiteSetting.xgoose_model,
+        created_at: Time.current,
+      )
+    end
     def check_access
       if !SiteSetting.xgoose_enabled || current_user.suspended? || !current_user.active?
         raise Discourse::InvalidAccess

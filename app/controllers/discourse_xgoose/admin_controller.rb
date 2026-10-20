@@ -30,12 +30,15 @@ module DiscourseXgoose
       @requests = @session.requests.order(:id)
       @events = @session.events.order(:sequence, :id)
       @complete = Transcript.complete?(@requests, @events)
+      @reasons = Transcript.reasons(@requests, @events)
       respond_to do |format|
         format.html { render layout: false }
         format.json do
           render json: {
                    session: @session.as_json(only: %i[id user_id created_at updated_at]),
                    complete: @complete,
+                   reasons: @reasons,
+                   timeline: Transcript.timeline(@requests, @events),
                    note: I18n.t("xgoose.admin.client_note"),
                    requests:
                      @requests.as_json(
@@ -46,6 +49,9 @@ module DiscourseXgoose
                          request_id
                          turn_id
                          model
+                         purpose
+                         first_token_ms
+                         upstream_status
                          status
                          messages
                          response_message
@@ -67,22 +73,8 @@ module DiscourseXgoose
                  }
         end
         format.text do
-          lines = [
-            "xGoose transcript",
-            "Session: #{@session.id}; user: #{@session.user_id}; complete: #{@complete}",
-            I18n.t("xgoose.admin.client_note"),
-          ]
-          @requests.each do |r|
-            lines << "\nREQUEST #{r.request_id} (#{r.status}; #{r.charged_tokens} tokens; USD=#{r.charged_microusd / 1_000_000.0}; estimated=#{r.estimated})"
-            lines << "Input snapshot (includes context from earlier requests):"
-            r.messages.each { |m| lines << "#{m["role"]}: #{JSON.generate(m.except("role"))}" }
-            lines << "assistant: #{JSON.generate(r.response_message)}"
-            lines << "error: #{r.error_code}" if r.error_code
-          end
-          @events.each do |e|
-            lines << "client_reported [#{e.sequence}] #{e.kind}: #{JSON.generate(e.payload)}"
-          end
-          send_data lines.join("\n"),
+          lines = Transcript.text(@session, @requests, @events)
+          send_data lines,
                     type: "text/plain; charset=utf-8",
                     filename: "xgoose-#{@session.id}.txt",
                     disposition: "attachment"
@@ -91,8 +83,10 @@ module DiscourseXgoose
     end
     def destroy
       session = Session.find(params[:id])
-      raise Discourse::InvalidAccess if session.requests.where(status: "reserved").exists?
-      session.destroy!
+      session.with_lock do
+        raise Discourse::InvalidAccess if session.requests.where(status: "reserved").exists?
+        session.destroy!
+      end
       render json: { ok: true }
     end
   end

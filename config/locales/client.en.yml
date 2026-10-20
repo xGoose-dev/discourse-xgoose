@@ -1,3 +1,4 @@
+---
 en:
   js:
     xgoose:
@@ -7,7 +8,7 @@ en:
       close: Close panel
       new_chat: New chat
       you: You
-      remaining: '%{count} remaining'
+      remaining: "%{count} remaining"
       resets: Resets %{time}
       conversation: Conversation
       welcome: Ask your community
@@ -23,23 +24,27 @@ en:
       placeholder: Ask about your forum…
       send: Send
       stop: Stop
-      privacy: Your chats and images are saved in this browser until you delete them. Forum content and
-        attached images are sent to the site AI provider. Administrators can access diagnostic transcripts;
-        images are represented by metadata, not stored pixels. Restricted posts and opted-in private messages
-        may be included.
+      privacy: Your chats and images are saved in this browser until you delete them.
+        Forum content and attached images are sent to the site AI provider. Administrators
+        can access diagnostic transcripts; images are represented by metadata, not
+        stored pixels. Restricted posts and opted-in private messages may be included.
       login_required: Log in to the forum to use xGoose.
       include_private: Include my private messages
-      log_warning: Some tool logs could not be saved. The administrator transcript may be incomplete.
+      log_warning: Some tool logs could not be saved. The administrator transcript
+        may be incomplete.
       errors:
         generic: The request failed. Try a new chat or contact a site administrator.
         not_configured: The site administrator needs to configure the AI provider.
-        quota_exceeded: Your daily dollar budget is used up or too small to reserve this request. Wait
-          for the reset or start a shorter chat.
+        quota_exceeded: Your daily dollar budget is used up or too small to reserve
+          this request. Wait for the reset or start a shorter chat.
         context_limit: This conversation is too long. Start a new chat.
-        turn_limit: This research reached its step limit. Ask a narrower follow-up question.
-        busy: A request is already running, or the site is busy. Wait a moment and try again.
+        turn_limit: This research reached its step limit. Ask a narrower follow-up
+          question.
+        busy: A request is already running, or the site is busy. Wait a moment and
+          try again.
         rate_limited: Too many requests. Wait before trying again.
-        upstream_error: The AI provider could not complete the request. Try again later.
+        upstream_error: The AI provider could not complete the request. Try again
+          later.
         upstream_timeout: The AI provider timed out. Try a smaller question.
         upstream_incomplete: The connection ended before the answer was complete.
         request_too_large: The request is too large. Start a shorter chat.
@@ -57,9 +62,10 @@ en:
         current_topic: Read current topic
       prompts:
         summarize: Read and summarize the current topic. Cite the posts you use.
-        related: Read the current topic, then search for related discussions and explain the connections
-          with citations.
-        recent: Show recent discussions in this forum and read the most relevant ones before summarizing.
+        related: Read the current topic, then search for related discussions and explain
+          the connections with citations.
+        recent: Show recent discussions in this forum and read the most relevant ones
+          before summarizing.
       forum: forum
       history: Chat history
       history_hint: Saved on this device. Select a chat to continue.
@@ -82,14 +88,147 @@ en:
       chat_cost: This chat %{cost}
       context: Context %{percent}%
       summaries:
-        one: '%{count} summary'
-        other: '%{count} summaries'
+        one: "%{count} summary"
+        other: "%{count} summaries"
       summary: Earlier context summary
-      auto_summary: Earlier context is automatically summarized as the conversation grows. The full chat
-        stays in local history.
+      auto_summary: Earlier context is automatically summarized as the conversation
+        grows. The full chat stays in local history.
       privacy_label: Sent to site AI · administrator logs
-      storage_warning: Local history could not be saved. Check browser storage before closing this chat.
+      storage_warning: Local history could not be saved. Check browser storage before
+        closing this chat.
       image_prompt: Describe this image and search the forum for relevant discussions.
       details: Details & privacy
       model: Model
-      budget_remaining: '%{amount} left today'
+      budget_remaining: "%{amount} left today"
+      admin:
+        title: xGoose
+        overview: Overview
+        users: User usage
+        sessions: Conversation logs
+        description: Usage, performance, and diagnostic transcripts.
+        users_description: Inspect usage and manage individual budgets.
+        sessions_description: Review conversations and model requests.
+        user_detail: User usage & budget
+        transcript: Transcript
+        period: Period
+        today: Today
+        days7: Last 7 days
+        days30: Last 30 days
+        days90: Last 90 days
+        custom: Custom range
+        from: From
+        to: To
+        user: User
+        model: Model
+        all_models: All models
+        all: All
+        status: Status
+        completed: Successful
+        failed: Failed
+        interrupted: Interrupted
+        in_progress: In progress
+        apply: Apply filters
+        username: Username
+        sort: Sort by
+        last_active: Last activity
+        utc_reset: Daily budgets reset at 00:00 UTC.
+        loading: Loading…
+        cost: Charged usage (USD)
+        active_users: Active users
+        calls: Model calls
+        failure_rate: Upstream failure rate
+        concurrency: Active model calls
+        reserved: Reserved
+        cleanup: Last successful cleanup
+        no_data: No data
+        cost_note: Calculated from site pricing snapshots, including context summaries.
+          This is not the provider invoice. Estimated charges are shown separately.
+        alert_upstream: AI provider failures exceeded 20% over at least 5 calls in
+          the last 15 minutes. View failures.
+        alert_expired: Expired reservations need settlement. View requests.
+        alert_cleanup: Cleanup has not succeeded in the last 15 minutes. Check the
+          scheduled job in /sidekiq.
+        alert_incomplete: Some transcripts in this period are incomplete. Review conversations.
+        alert_quota: Some requests were blocked by daily budgets. Review rejections.
+        cost_chart: Usage cost over time (USD)
+        tokens_chart: Token usage over time
+        requests_chart: Requests over time
+        latency_chart: Response latency (ms)
+        reported_cost: Usage reported by provider
+        estimated_cost: Conservative estimate
+        uncached_input: Input excluding cache hits
+        cache_tokens: Cache hits (part of input)
+        output_tokens: Output
+        rejected: Rejected before model call
+        duration_p50: Total P50
+        duration_p95: Total P95
+        first_token_p50: First output P50
+        first_token_p95: First output P95
+        chart_data: View chart data
+        empty: No records match these filters.
+        turns: User turns
+        tool_calls: Tool calls
+        summaries: Context summary calls
+        top_users: Top users by cost
+        daily_limit: Daily base limit (USD)
+        today_bonus: Total additional budget today (USD)
+        used: Used
+        used_today: Used today
+        remaining: Remaining today
+        edit_budget: Manage this user’s budget
+        budget_help: Leave the daily base limit blank to follow the site default.
+          Zero blocks new calls. The additional budget is today’s total, not an increment,
+          and expires at 00:00 UTC. Already spent or reserved funds cannot be withdrawn.
+          Changes require a reason.
+        reason: Reason
+        site_default: Site default
+        save_daily: Save daily limit
+        save_bonus: Save today’s additional budget
+        saved: Budget updated.
+        save_failed: The budget could not be updated. Check the amount and reason,
+          then retry.
+        load_failed: Could not load this report. Check the filters and retry.
+        recent_errors: Recent errors
+        changes: Budget change history
+        date: Date
+        admin: Administrator
+        before: Before
+        after: After
+        tokens: Tokens
+        log_type: Log type
+        integrity_label: Transcript completeness
+        complete: Complete
+        incomplete: Incomplete
+        session_id: Session
+        request_id: Request ID
+        error_code: Error / integrity reason
+        client_note: Tool events are client-reported and untrusted; server records
+          are authoritative for accounting. Image pixels are not stored.
+        export: Export text
+        delete: Delete transcript
+        delete_confirm: Delete this transcript? Charged usage and monitoring statistics
+          will remain until their retention deadline. This does not refund usage.
+        delete_failed: Could not delete this transcript. Wait for active requests
+          to finish.
+        turn: Turn
+        raw_requests: Original model requests
+        client_events: Client-reported events
+        image_metadata: "[Attached image — pixels not stored; see original request
+          metadata]"
+        previous: Previous
+        next: Next
+        all_sessions: View all conversations
+        integrity:
+          no_requests: No model calls
+          legacy_unchecked: Legacy log awaiting verification
+          request_in_progress: Model request in progress
+          upstream_failed: Upstream failed
+          interrupted: Request interrupted
+          event_gap: Client event sequence has gaps
+          missing_client_events: Client completion event missing
+          partial_output: Final answer incomplete
+          missing_tool_result: Tool result missing
+        purpose:
+          generation: Answer generation
+          summary: Context summary
+          unknown: Purpose not recorded

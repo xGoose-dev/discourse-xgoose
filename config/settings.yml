@@ -53,6 +53,6 @@ plugins:
     min: 10
     max: 300
   xgoose_log_retention_days:
-    default: 30
+    default: 90
     min: 1
     max: 365

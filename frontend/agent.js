@@ -27,6 +27,7 @@ export function createResearchAgent({
   let running = false;
   let compactNext = forceSummary;
   let compactedThisTurn = false;
+  let requestPurpose = "generation";
   let sequence = 0;
   let pendingLogs = Promise.resolve();
   let logFailed = false;
@@ -73,6 +74,7 @@ export function createResearchAgent({
             "X-CSRF-Token": csrfToken(),
             "X-Xgoose-Request-Id": crypto.randomUUID(),
             "X-Xgoose-Turn-Id": turnId,
+            "X-Xgoose-Purpose": requestPurpose,
           },
           body,
           signal: init?.signal || input?.signal,
@@ -106,6 +108,7 @@ export function createResearchAgent({
       compactNext = false;
       compactedThisTurn = true;
       onCompaction?.({ running: true });
+      requestPurpose = "summary";
       const stream = transport(
         model,
         {
@@ -127,7 +130,12 @@ export function createResearchAgent({
         },
         { signal },
       );
-      const result = await stream.result();
+      let result;
+      try {
+        result = await stream.result();
+      } finally {
+        requestPurpose = "generation";
+      }
       if (result.stopReason === "error" || result.stopReason === "aborted")
         throw new Error(result.errorMessage || "compaction_failed");
       const summary = result.content

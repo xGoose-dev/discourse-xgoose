@@ -4,7 +4,7 @@
 
 [简体中文](README.zh-CN.md) · [Installation](#installation) · [Configuration](#configuration) · [Architecture](#architecture) · [Development](docs/development.md)
 
-> v0.1.0. See [verification](docs/verification.md) for the exact Discourse versions and checks completed, including a live Luna image-and-research workflow. No production forum is deployed by this repository.
+> v0.2.0. See [verification](docs/verification.md) for the exact Discourse versions and checks completed, including a live Luna image-and-research workflow. No production forum is deployed by this repository.
 
 ## What it does
 
@@ -13,7 +13,7 @@
 - Reads restricted categories that the member can access. Private message tools require the member to enable **Include my private messages**.
 - Uses one administrator-configured OpenAI-compatible model. Members never receive the upstream API key.
 - Enforces daily dollar budgets (default **$2 per member**), request rates, and concurrency on the server, including for administrators.
-- Keeps private administrator audit logs with request snapshots, partial responses, usage, and client-reported tool events.
+- Provides native administrator cost, token, request, and latency charts, per-user usage and budget controls, and readable diagnostic transcripts.
 - Attaches up to two images per message for model understanding and forum research, with browser-side resizing.
 - Saves account-scoped chat history and images locally in IndexedDB; reopening the panel starts a fresh chat, with explicit history restore.
 - Automatically summarizes earlier Pi context as conversations grow, while retaining the full local transcript.
@@ -23,7 +23,7 @@ The first version focuses on reading. It does not post replies, execute arbitrar
 
 ![The simplified xGoose chat panel, with secondary settings behind Details & privacy](docs/screenshots/simple-desktop.jpg)
 
-[Image research](docs/screenshots/live-image-demo.jpg) · [Local history](docs/screenshots/history-live.jpg) · [Administrator audit view](docs/screenshots/admin-live.jpg)
+[Image research](docs/screenshots/live-image-demo.jpg) · [Local history](docs/screenshots/history-live.jpg) · [Monitoring dashboard](docs/screenshots/admin-overview.png) · [Readable transcript](docs/screenshots/admin-transcript.png)
 
 ## Installation
 
@@ -55,15 +55,21 @@ For **GPT-6 Luna**, use `gpt-6-luna`, enable `xgoose_use_max_completion_tokens`,
 
 The model must support streaming **OpenAI Chat Completions**, text/image messages, and function tool calls. The upstream should return streaming usage with `stream_options.include_usage`; providers that omit usage are charged conservatively. Responses API, non-streaming mode, and per-member API keys are outside this version's interface.
 
-Defaults are **$2 per user per UTC day**, 2,048 output tokens per call, 20 model requests per user per minute, one concurrent call per user, eight concurrent calls across the site, eight model calls per question, a 120-second timeout, and 30 days of audit retention. Each limit is a site setting except the fixed one-call-per-user concurrency limit.
+Defaults are **$2 per user per UTC day**, 2,048 output tokens per call, 20 model requests per user per minute, one concurrent call per user, eight concurrent calls across the site, eight model calls per question, a 120-second timeout, and 90 days of audit retention. Each limit is a site setting except the fixed one-call-per-user concurrency limit.
 
 The context setting uses a conservative UTF-8 byte estimate plus message overhead and output allowance. Long conversations can reach this safety estimate before the provider's real tokenizer limit. At 55% of the configured context estimate, the Pi request hook generates a compact summary, preserving questions, source URLs, image observations, and outstanding research. The full chat remains in local history. Summary calls use the same server budget and per-question call limit. Extremely large single messages can still require a shorter question. Completed calls use upstream input/output usage and reported cache hits with the price snapshot recorded at reservation; interrupted calls or missing usage retain the conservative dollar reservation. Money is stored as integer micro-USD, rounded up once per call. Displayed cost is the plugin estimate under administrator-configured rates, not an invoice from the provider. Repeated retries are never free. Administrators have the same limits as other users.
 
 ## Audit logs and privacy
 
-Administrators can open **`/admin/plugins/xgoose/logs`** to filter by user, time, and status, inspect request/response snapshots and tool events, export JSON or plain-text transcripts, and delete completed logs. Moderators and regular members cannot read these logs. Scheduled cleanup removes sessions after the configured retention period, including their requests and events.
+Open **Admin → Plugins → xGoose → Overview**, or `/admin/plugins/discourse-xgoose/overview`, for cost, token, request outcome, and P50/P95 latency charts. Reports default to seven calendar days in the administrator’s timezone; daily budgets reset at 00:00 UTC. The overview refreshes every 30 seconds while visible. Charts distinguish reported usage from conservative charges, and pre-model rejections from upstream failures. Input excludes cache hits in the stacked chart so cached tokens are counted once. The top-ten user table links to individual reports; chart points open logs for that day.
 
-A request snapshot includes prior model context, so exports deliberately label snapshots rather than presenting repeated context as new messages. Client tool events are untrusted diagnostics. Missing sequence numbers, missing tool results, absent turn-end events, or interrupted requests mark a transcript incomplete. The server's own request and usage records drive accounting.
+**User usage** searches all forum accounts, including members who have never used the assistant. An administrator can set an individual daily base limit (zero blocks new calls, blank restores the site default) and set today’s total additional dollar budget. Additional budget expires at midnight UTC; only its unspent and unreserved portion can be withdrawn. Each change requires a reason and records the administrator, date, effective day, and before/after amounts. Mutations are locked with request reservations and have idempotency IDs. Lowering a budget does not cancel active calls or refund usage. Members cannot edit budgets or request extensions through the plugin.
+
+**Conversation logs** uses summary-only cursor-paginated lists. Open a session to read its turn-by-turn question, model output, tool results, and context summaries, then expand the original model snapshots if needed. Export JSON for raw requests/events and reconstructed turns, or text for a readable transcript. Missing client events, sequence gaps, missing tool results, partial answers, and interrupted requests are identified explicitly. Tool events and purpose labels are client-reported diagnostics; only server-side usage records drive charges. Older requests have no purpose or first-output measurement and show unknown values rather than invented history. Restricted/private text may appear in these administrator-only records. Moderators and regular members have no access.
+
+Monitoring flags high upstream failure rates (at least five calls and 20% failures in 15 minutes), expired reservations, stale cleanup, incomplete transcripts, and quota rejections. No external metrics service or proactive notifications are required. `/sidekiq/scheduler` exposes the native scheduled-job diagnostics.
+
+The default retention is **90 days** for conversation content, request metrics, usage, rejection records, and budget-change history. Effective personal daily-limit configuration remains until changed. Upgrading changes the previous 30-day default to 90 and preserves other custom settings; previously removed data cannot be restored. Sessions expire based on last activity, with active requests protected. Manually deleting a transcript preserves charged usage and monitoring metrics until their retention deadline, without refunding budget. The legacy `/admin/plugins/xgoose/logs` and session/export URLs remain available.
 
 Content read for an answer and attached images are sent to your configured model provider. Text can appear in administrator logs; image pixels are replaced by SHA-256 and encoded-size metadata in audit snapshots. Image observations in model responses remain in the transcript. Images and full chat content stay in local browser history until the member deletes them or clears site storage. A shared browser profile shares access to its local storage; account scoping is an application boundary, not encryption. The history panel supports individual chat deletion. Refreshing does not erase history.
 

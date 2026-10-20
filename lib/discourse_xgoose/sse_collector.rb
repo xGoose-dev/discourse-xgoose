@@ -4,7 +4,7 @@ module DiscourseXgoose
   # Parses SSE independently of TCP chunk boundaries; stores a bounded partial
   # answer even when the browser disconnects or the upstream never sends DONE.
   class SseCollector
-    attr_reader :message, :tokens, :done, :finish_reason, :usage
+    attr_reader :message, :tokens, :done, :finish_reason, :usage, :meaningful_output
     def initialize
       @buffer = +""
       @event = []
@@ -51,6 +51,9 @@ module DiscourseXgoose
       @finish_reason = choice["finish_reason"] if choice["finish_reason"]
       delta = choice["delta"] || {}
       @message["content"] << delta["content"] if delta["content"].is_a?(String)
+      @meaningful_output ||= delta["content"].is_a?(String) && delta["content"].present?
+      @meaningful_output ||=
+        Array(delta["tool_calls"]).any? { |t| t.dig("function", "arguments").present? }
       Array(delta["tool_calls"]).each do |call|
         index = call["index"]
         raise Error.new("invalid_upstream", 502) unless index.is_a?(Integer) && index.between?(0, 7)

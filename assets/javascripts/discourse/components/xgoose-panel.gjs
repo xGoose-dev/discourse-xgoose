@@ -19,7 +19,7 @@ export default class XgoosePanel extends Component {
     return `$${(this.xgoose.config?.quota?.remaining_usd || 0).toFixed(2)}`;
   }
   get daily() {
-    return `$${(this.xgoose.config?.quota?.limit_usd || 2).toFixed(2)}`;
+    return `$${(this.xgoose.config?.quota?.limit_usd ?? 2).toFixed(2)}`;
   }
   get cost() {
     return `$${this.xgoose.costUsd.toFixed(5)}`;
@@ -349,6 +349,14 @@ export default class XgoosePanel extends Component {
                     }}</span><span>{{this.remaining}}
                     /
                     {{this.daily}}</span></div>
+                <div class="xgoose-info-row"><span>{{i18n
+                      "xgoose.admin.daily_limit"
+                    }}</span><strong
+                  >${{this.xgoose.config.quota.base_limit_usd}}</strong></div>
+                <div class="xgoose-info-row"><span>{{i18n
+                      "xgoose.admin.today_bonus"
+                    }}</span><strong
+                  >${{this.xgoose.config.quota.bonus_usd}}</strong></div>
                 <p>{{i18n "xgoose.resets" time=this.resetTime}}</p>
                 <div class="xgoose-context"><span>{{i18n
                       "xgoose.chat_cost"
